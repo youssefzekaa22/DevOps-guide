@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git: حكاية زيكا وكريم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800;900&family=Tajawal:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#11151b;
+    --bg-alt:#161b22;
+    --panel:#1a212b;
+    --panel-2:#1f2731;
+    --border:#2a323d;
+    --amber:#4f9fe8;
+    --amber-dim:#2f628a;
+    --teal:#5cb8a6;
+    --text:#e9e7de;
+    --text-dim:#96a0af;
+    --text-faint:#5c6675;
+    --danger:#d9695f;
+    --radius:10px;
+    --serif-ar:'Cairo',sans-serif;
+    --body-ar:'Tajawal',sans-serif;
+    --mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--body-ar);
+    line-height:1.85;
+    font-size:16.5px;
+  }
+  ::selection{background:var(--amber);color:#141821;}
+
+  /* ---------- Layout ---------- */
+  .app{display:flex; min-height:100vh;}
+  .sidebar{
+    width:300px; flex-shrink:0;
+    background:var(--bg-alt);
+    border-left:1px solid var(--border);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:22px 18px 60px;
+  }
+  .sidebar::-webkit-scrollbar{width:8px;}
+  .sidebar::-webkit-scrollbar-thumb{background:var(--panel-2); border-radius:8px;}
+
+  .brand{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--amber); box-shadow:0 0 10px var(--amber);}
+  .brand-title{font-family:var(--serif-ar); font-weight:900; font-size:1.15rem; color:var(--text);}
+  .brand-sub{font-family:var(--mono); font-size:.72rem; color:var(--text-faint); margin:2px 0 18px; letter-spacing:.3px;}
+
+  .search-box{position:relative; margin-bottom:16px;}
+  .search-box input{
+    width:100%; background:var(--panel); border:1px solid var(--border); color:var(--text);
+    padding:10px 14px; border-radius:8px; font-family:var(--body-ar); font-size:.85rem;
+  }
+  .search-box input:focus{outline:none; border-color:var(--amber-dim);}
+  .search-box input::placeholder{color:var(--text-faint);}
+
+  .nav-group-label{
+    font-family:var(--mono); font-size:.68rem; color:var(--text-faint);
+    text-transform:uppercase; letter-spacing:1px; margin:18px 4px 8px;
+  }
+  .nav-link{
+    display:flex; align-items:baseline; gap:8px;
+    padding:8px 10px; border-radius:8px; color:var(--text-dim);
+    text-decoration:none; font-size:.88rem; cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .nav-link .n{font-family:var(--mono); color:var(--text-faint); font-size:.72rem; min-width:20px;}
+  .nav-link:hover{background:var(--panel); color:var(--text);}
+  .nav-link.active{background:var(--panel-2); color:var(--amber); font-weight:600;}
+  .nav-link.hidden{display:none;}
+
+  .main{flex:1; min-width:0;}
+  .topbar{
+    position:sticky; top:0; z-index:5;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 34px; background:rgba(17,21,27,.85); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);
+  }
+  .topbar .path{font-family:var(--mono); font-size:.78rem; color:var(--text-faint); direction:ltr; unicode-bidi:isolate;}
+  .topbar .path span{color:var(--amber);}
+  #progressLabel{direction:ltr; unicode-bidi:isolate;}
+  .menu-btn{display:none; background:none; border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:8px; cursor:pointer; font-size:1.1rem;}
+
+  .content{max-width:880px; margin:0 auto; padding:50px 34px 140px;}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:40px 0 60px; border-bottom:1px solid var(--border); margin-bottom:50px;}
+  .hero .eyebrow{font-family:var(--mono); color:var(--amber); font-size:.82rem; letter-spacing:.5px; margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+  .hero h1{font-family:var(--serif-ar); font-size:2.6rem; font-weight:900; margin:0 0 16px; line-height:1.3;}
+  .hero h1 em{color:var(--amber); font-style:normal;}
+  .hero p{color:var(--text-dim); font-size:1.05rem; max-width:640px; margin:0 0 26px;}
+  .terminal{
+    background:#0d1116; border:1px solid var(--border); border-radius:12px;
+    padding:20px 22px; font-family:var(--mono); font-size:.86rem; color:#c9d1d9;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
+    direction:ltr; text-align:left; unicode-bidi:isolate;
+  }
+  .terminal .tbar{display:flex; gap:6px; margin-bottom:14px;}
+  .terminal .tbar span{width:11px;height:11px;border-radius:50%; display:inline-block;}
+  .terminal .tbar span:nth-child(1){background:#d9695f;}
+  .terminal .tbar span:nth-child(2){background:#e6a83d;}
+  .terminal .tbar span:nth-child(3){background:#5cb8a6;}
+  .terminal .line{margin:0 0 6px;}
+  .terminal .prompt{color:var(--teal);}
+  .terminal .cmd{color:#e9e7de;}
+  .terminal .out{color:var(--text-faint);}
+  .caret{display:inline-block; width:7px; height:1em; background:var(--amber); vertical-align:middle; animation:blink 1s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+
+  .stat-row{display:flex; gap:28px; margin-top:32px; flex-wrap:wrap;}
+  .stat{}
+  .stat b{font-family:var(--serif-ar); font-size:1.6rem; color:var(--amber); display:block;}
+  .stat span{font-size:.78rem; color:var(--text-faint);}
+
+  /* ---------- Chapter ---------- */
+  .chapter{margin-bottom:70px; scroll-margin-top:90px;}
+  .chapter-head{display:flex; align-items:center; gap:14px; margin-bottom:6px;}
+  .chapter-num{
+    font-family:var(--mono); color:var(--amber); border:1px solid var(--amber-dim);
+    border-radius:6px; padding:2px 9px; font-size:.78rem;
+  }
+  .chapter h2{font-family:var(--serif-ar); font-size:1.9rem; font-weight:800; margin:0;}
+  .chapter .lede{color:var(--text-dim); font-size:.98rem; margin:10px 0 28px; border-right:3px solid var(--amber-dim); padding-right:16px;}
+
+  .dialogue{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px 22px; margin:18px 0;}
+  .dialogue p{margin:0 0 12px;}
+  .dialogue p:last-child{margin-bottom:0;}
+  .dialogue b.who{color:var(--amber); font-family:var(--body-ar); font-weight:700;}
+  .dialogue b.who.k{color:var(--teal);}
+
+  .content h3{font-family:var(--serif-ar); font-size:1.25rem; font-weight:700; margin:32px 0 12px; color:var(--text);}
+  .content h4{font-family:var(--serif-ar); font-size:1.05rem; font-weight:700; margin:22px 0 10px; color:var(--amber);}
+  .content p{margin:0 0 14px; color:#d8d6cd;}
+  .content ul, .content ol{margin:0 0 16px; padding-right:22px; color:#d8d6cd;}
+  .content li{margin-bottom:6px;}
+
+  pre{
+    background:#0d1116; border:1px solid var(--border); border-radius:10px;
+    padding:40px 18px 16px; overflow-x:auto; margin:14px 0 20px; position:relative;
+    direction:ltr; text-align:left;
+  }
+  pre code{font-family:var(--mono); font-size:.84rem; color:#c9d1d9; line-height:1.7; white-space:pre;}
+  .cmt{color:#6b7684;}
+  .copy-btn{
+    position:absolute; left:10px; top:10px; background:var(--panel-2); border:1px solid var(--border);
+    color:var(--text-dim); font-size:.68rem; padding:4px 10px; border-radius:6px; cursor:pointer;
+    font-family:var(--body-ar); direction:rtl; z-index:2; line-height:1.4;
+  }
+  .copy-btn:hover{color:var(--amber); border-color:var(--amber-dim);}
+
+  table{width:100%; border-collapse:collapse; margin:16px 0 22px; font-size:.9rem;}
+  th, td{border:1px solid var(--border); padding:9px 12px; text-align:right;}
+  th{background:var(--panel); color:var(--amber); font-family:var(--body-ar); font-weight:700;}
+  td{color:#d8d6cd;}
+  tr:nth-child(even) td{background:rgba(255,255,255,.015);}
+  code.inline{background:var(--panel-2); border:1px solid var(--border); border-radius:5px; padding:1px 7px; font-family:var(--mono); font-size:.82em; color:var(--amber); direction:ltr; unicode-bidi:isolate; display:inline-block;}
+
+  .note{background:rgba(79,159,232,.08); border:1px solid var(--amber-dim); border-radius:10px; padding:14px 18px; margin:18px 0; font-size:.92rem;}
+  .note b{color:var(--amber);}
+  .warn{background:rgba(217,105,95,.08); border:1px solid #6b3a35; border-radius:10px; padding:14px 18px; margin:18px 0; font-size:.92rem;}
+  .warn b{color:var(--danger);}
+  .extra{background:rgba(92,184,166,.07); border:1px solid #2f5951; border-radius:10px; padding:14px 18px; margin:18px 0; font-size:.92rem;}
+  .extra b{color:var(--teal);}
+
+  .diagram{
+    background:#0d1116; border:1px solid var(--border); border-radius:10px; padding:18px;
+    font-family:var(--mono); font-size:.82rem; color:#c9d1d9; overflow-x:auto; direction:ltr; text-align:left; margin:16px 0 22px;
+  }
+
+  /* ---------- Q&A ---------- */
+  .qa-title{display:flex; align-items:center; gap:10px; margin:36px 0 14px;}
+  .qa-title h3{margin:0;}
+  .qa-badge{font-family:var(--mono); font-size:.68rem; color:var(--bg); background:var(--amber); padding:2px 8px; border-radius:20px; font-weight:700;}
+  details.qa{
+    background:var(--panel); border:1px solid var(--border); border-radius:9px;
+    margin-bottom:10px; overflow:hidden;
+  }
+  details.qa summary{
+    list-style:none; cursor:pointer; padding:13px 18px; font-weight:600; color:var(--text);
+    display:flex; align-items:center; gap:10px; font-size:.94rem;
+  }
+  details.qa summary::-webkit-details-marker{display:none;}
+  details.qa summary::before{
+    content:"›"; color:var(--amber); font-family:var(--mono); font-size:1.1rem;
+    transition:transform .18s; display:inline-block;
+  }
+  details.qa[open] summary::before{transform:rotate(90deg);}
+  details.qa .qa-body{padding:0 18px 16px; color:#d8d6cd; font-size:.92rem; border-top:1px solid var(--border); padding-top:12px;}
+  details.qa .qa-body pre{margin-top:10px;}
+
+  /* ---------- Assignments ---------- */
+  .assign-block{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:24px 26px; margin:20px 0 30px;}
+  .assign-block h4{margin-top:0; color:var(--amber); font-size:1.05rem;}
+  .assign-block .tag{display:inline-block; background:var(--panel-2); color:var(--teal); font-family:var(--mono); font-size:.68rem; padding:3px 9px; border-radius:20px; margin-bottom:12px;}
+  .step-label{font-family:var(--mono); font-size:.72rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:.5px; margin:16px 0 6px;}
+
+  footer{border-top:1px solid var(--border); padding:40px 34px; text-align:center; color:var(--text-faint); font-size:.85rem;}
+
+  /* ---------- Search highlight ---------- */
+  mark{background:var(--amber); color:#141821; border-radius:2px; padding:0 2px;}
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 900px){
+    .sidebar{
+      position:fixed; right:0; top:0; z-index:20; transform:translateX(100%);
+      transition:transform .25s; width:82%; max-width:320px; box-shadow:-10px 0 40px rgba(0,0,0,.4);
+    }
+    .sidebar.open{transform:translateX(0);}
+    .menu-btn{display:inline-block;}
+    .content{padding:34px 20px 100px;}
+    .hero h1{font-size:1.9rem;}
+    .topbar{padding:12px 18px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="dot"></span>
+      <span class="brand-title">Git: حكاية زيكا وكريم</span>
+    </div>
+    <div class="brand-sub">$ git log --graph --all</div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="دور في الكتاب... (بحث)">
+    </div>
+
+    <div id="navContainer"></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <div class="path">~/git-course/<span id="pathCurrent">intro</span></div>
+      <div style="font-family:var(--mono); font-size:.72rem; color:var(--text-faint);" id="progressLabel"></div>
+    </div>
+
+    <div class="content" id="content">
+
+      <section class="hero" id="intro">
+        <div class="eyebrow">$ git log --whoami<span class="caret"></span></div>
+        <h1>تتعلم <em>Git</em> زي ما بتتفرج على حكاية،<br>مش زي ما بتحفظ محاضرة.</h1>
+        <p>الموقع ده منهج Git كامل من الصفر للاحتراف — من أول "ليه أصلاً محتاجين Version Control" لحد الـ Rebase والـ Workflows المتقدمة اللي فرق العمل الحقيقية بتستخدمها. متحكي على شكل حوار بين <b style="color:var(--text)">زيكا</b> (مهندس بيتعلم) و<b style="color:var(--text)">الأستاذ كريم</b> (مهندس خبير). كل فصل فيه شرح، أمثلة أوامر حقيقية، أسئلة وأجوبة تتفتح بالضغط، ومرجع شامل لكل الأوامر في الآخر.</p>
+
+        <div class="terminal">
+          <div class="tbar"><span></span><span></span><span></span></div>
+          <div class="line"><span class="prompt">zeeka@learning</span><span class="cmd">:~$ </span><span class="cmd">git init my-knowledge</span></div>
+          <div class="line out">14 chapters · Branching + Merging + Rebase + Remote + Workflows + Git Reference كامل</div>
+          <div class="line"><span class="prompt">zeeka@learning</span><span class="cmd">:~$ </span><span class="cmd">git commit -m "بدأت أفهم"<span class="caret"></span></span></div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat"><b>14</b><span>فصل شرح كامل</span></div>
+          <div class="stat"><b>60+</b><span>أمر Git حقيقي بالتفصيل</span></div>
+          <div class="stat"><b>60+</b><span>سؤال وجواب سريع</span></div>
+          <div class="stat"><b>100%</b><span>مصطلحات تقنية بالإنجليزي</span></div>
+        </div>
+      </section>
+
+      <div id="chapters"></div>
+
+    </div>
+
+    <footer>
+      $ git log --oneline --all — كتاب Git: حكاية زيكا وكريم
+    </footer>
+  </div>
+
+</div>
+
+<script>
+/* ============ DATA WILL BE INSERTED HERE ============ */
+const CHAPTERS = [];
+CHAPTERS.push({
+  id:"ch1", num:"01", title:"ليه أصلاً محتاجين Git؟", navTitle:"مقدمة Git",
+  lede:"زيكا كان بيحفظ نسخ من مشروعه باسماء زي final.zip و final_v2.zip و final_REALLY_final.zip.",
+  body:`
+  <div class="dialogue">
+    <p><b class="who">زيكا:</b> أستاذ كريم، أنا بعمل نسخة احتياطية من الكود كل ما أخلص حاجة، بحفظها في فولدر تاني بتاريخ مختلف. بس المشروع بقى فوضى، ومش عارف امتى غيرت إيه بالظبط.</p>
+    <p><b class="who k">كريم:</b> ده بالظبط المشكلة اللي <b>Git</b> اتعمل عشانها. Git هو نظام <b>Version Control</b> — بيسجل كل تغيير حصل في الكود بتاعك، امتى حصل، مين عمله، وليه، وبيخليك ترجع لأي نقطة في الماضي في ثانية واحدة.</p>
+  </div>
+
+  <h3>مشكلة إدارة الكود من غير Version Control</h3>
+  <ul>
+    <li>مش عارف "امتى بالظبط" اتغيرت حاجة معينة.</li>
+    <li>لو غلطت، صعب ترجع بالظبط للنسخة اللي قبلها.</li>
+    <li>لو أكتر من شخص بيشتغل على نفس الملفات، سهل إن حد يكتب فوق شغل التاني بالغلط.</li>
+    <li>مفيش سجل واضح (history) لأسباب التغييرات.</li>
+  </ul>
+
+  <h3>Git = تاريخ كامل + تعاون آمن</h3>
+  <p>Git بيحل المشاكل دي عن طريق حفظ "لقطات" (snapshots) لمشروعك كل ما تطلب منه كده، وبيديك أدوات قوية للتعامل مع أكتر من نسخة من الكود بتتطور بالتوازي (Branches)، وبعدين تجمعهم مع بعض بأمان (Merge).</p>
+
+  <h3>Git مقابل GitHub — فرق مهم جداً</h3>
+  <table>
+    <tr><th></th><th>Git</th><th>GitHub</th></tr>
+    <tr><td>إيه هو</td><td>برنامج (tool) بيشتغل على جهازك</td><td>موقع/خدمة بتستضيف مشاريع Git أونلاين</td></tr>
+    <tr><td>لازم إنترنت؟</td><td>لأ، بيشتغل محلياً بالكامل</td><td>أيوه، للوصول للخدمة</td></tr>
+    <tr><td>بدائل مشابهة</td><td>—</td><td>GitLab, Bitbucket</td></tr>
+  </table>
+  <div class="note"><b>خلاصة الفرق:</b> Git هو الأداة نفسها اللي بتسجل التاريخ محلياً على جهازك. GitHub هو مكان أونلاين تقدر ترفعله نسخة من المشروع بتاعك، عشان تشاركه مع فريق أو تعمله backup بعيد عن جهازك.</div>
+
+  <h3>الحالات الثلاث اللي أي ملف بيمر بيها في Git</h3>
+  <div class="diagram">
+Working Directory  ──git add──►  Staging Area  ──git commit──►  Repository (History)
+  (بتعدل الملف هنا)              (جاهز للحفظ)                  (اتحفظ فعلياً في التاريخ)
+  </div>
+  <table>
+    <tr><th>المرحلة</th><th>الوصف</th></tr>
+    <tr><td><b>Working Directory</b></td><td>الملفات زي ما هي على جهازك دلوقتي، بتعدل فيها مباشرة</td></tr>
+    <tr><td><b>Staging Area</b></td><td>منطقة مؤقتة، بتحط فيها بس التغييرات اللي عايز تحفظها في الـ commit الجاي</td></tr>
+    <tr><td><b>Repository</b></td><td>التاريخ الدائم المحفوظ، كل commit اتعمل قبل كده</td></tr>
+  </table>
+
+  <div class="extra"><b>معلومة إضافية:</b> Git اتعمل سنة 2005 بواسطة Linus Torvalds (نفس الشخص اللي عمل Linux Kernel)، عشان يدير تطوير الـ Linux Kernel نفسه، اللي فيه آلاف المساهمين بيشتغلوا بالتوازي.</div>
+  `,
+  qa:[
+    {q:"إيه المشكلة الأساسية اللي Git بيحلها؟", a:"إدارة تاريخ التغييرات في الكود بطريقة منظمة، بدل نسخ يدوية فوضوية، مع القدرة على الرجوع لأي نقطة سابقة والتعاون الآمن بين أكتر من شخص."},
+    {q:"إيه الفرق بين Git وGitHub؟", a:"Git هو الأداة نفسها اللي بتشتغل محلياً على جهازك وبتسجل التاريخ، وممكن تشتغل بدون إنترنت خالص. GitHub هو خدمة أونلاين لاستضافة مشاريع Git ومشاركتها مع فريق."},
+    {q:"اذكر المراحل الثلاثة اللي أي ملف بيمر بيها في Git", a:"Working Directory (التعديل المباشر) → Staging Area (تجهيز للحفظ عبر git add) → Repository (الحفظ الدائم عبر git commit)."},
+    {q:"إيه وظيفة الـ Staging Area بالتحديد؟", a:"منطقة مؤقتة تختار فيها بالضبط أي تغييرات عايز تحفظها في الـ commit الجاي، بدل ما تحفظ كل التغييرات الموجودة في المشروع دفعة واحدة."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch2", num:"02", title:"الأوامر الأساسية: أول مشروع Git", navTitle:"الأوامر الأساسية",
+  lede:"كريم: يلا نطبق عملياً، أبسط دورة حياة كاملة في Git من الصفر.",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> كل حاجة في Git بتبدأ من أمر واحد بسيط. خلينا نعمل أول مشروع مع بعض خطوة بخطوة.</p>
+  </div>
+
+  <h3>1. git init — بداية أي مشروع</h3>
+  <pre><code>mkdir my-project
+cd my-project
+git init</code></pre>
+  <p>الأمر ده بيعمل مجلد مخفي اسمه <code class="inline">.git</code> جوه مشروعك — هنا بالظبط Git بيخزن كل تاريخ المشروع بالكامل.</p>
+
+  <h3>2. git status — السؤال الأهم اللي هتسأله كل شوية</h3>
+  <pre><code>git status</code></pre>
+  <p>بيوريك حالة المشروع دلوقتي: إيه اللي اتعدل، إيه اللي جاهز للـ commit، وإيه اللي لسه مش متابع (untracked).</p>
+
+  <h3>3. git add — تجهيز التغييرات للحفظ</h3>
+  <pre><code>echo "hello world" > file.txt
+
+git add file.txt        <span class="cmt"># ملف واحد محدد</span>
+git add .                 <span class="cmt"># كل الملفات المتغيرة في المجلد الحالي</span>
+git add -A                <span class="cmt"># كل الملفات في المشروع كله</span></code></pre>
+
+  <h3>4. git commit — الحفظ الفعلي في التاريخ</h3>
+  <pre><code>git commit -m "Add file.txt with greeting message"</code></pre>
+  <div class="warn"><b>قاعدة مهمة:</b> رسالة الـ commit (<code class="inline">-m</code>) لازم تكون واضحة ومختصرة، بتشرح "إيه" اللي اتغير و"ليه"، مش بس "fix" أو "update". فريق الشغل هيقرأها بعدين وهيفهم منها بس، مش من الكود.</div>
+
+  <h3>5. git log — تاريخ كل الـ commits</h3>
+  <pre><code>git log
+git log --oneline          <span class="cmt"># سطر واحد لكل commit، أسهل للمراجعة السريعة</span>
+git log --oneline --graph  <span class="cmt"># مع رسم بياني للـ branches</span></code></pre>
+
+  <h3>6. git diff — إيه اللي فعلياً اتغير</h3>
+  <pre><code>git diff                    <span class="cmt"># الفرق بين Working Directory والـ Staging Area</span>
+git diff --staged           <span class="cmt"># الفرق بين الـ Staging Area وآخر commit</span></code></pre>
+
+  <h3>دورة الحياة الكاملة في مكان واحد</h3>
+  <div class="diagram">
+1. عدّل ملف
+2. git status         ← شوف إيه اللي اتغير
+3. git diff           ← شوف التفاصيل الدقيقة
+4. git add .          ← جهّز التغييرات
+5. git commit -m "..." ← احفظها في التاريخ
+6. git log --oneline  ← تأكد إنها اتسجلت
+  </div>
+
+  <div class="extra"><b>معلومة إضافية:</b> أول مرة تستخدم Git على جهاز جديد، لازم تعرّف نفسك أولاً:
+  <pre style="margin-top:8px"><code>git config --global user.name "Zeeka"
+git config --global user.email "zeeka@example.com"</code></pre>
+  المعلومات دي بتتسجل مع كل commit تعمله، عشان يبان مين عمل إيه.</div>
+  `,
+  qa:[
+    {q:"إيه وظيفة git init؟", a:"يحول مجلد عادي لمشروع Git، عن طريق عمل مجلد مخفي اسمه .git بيخزن جواه كل تاريخ المشروع."},
+    {q:"إيه الفرق بين git add . وgit add -A؟", a:"git add . بتضيف التغييرات في المجلد الحالي وما تحته بس. git add -A بتضيف كل التغييرات في المشروع كله، حتى لو إنت واقف في مجلد فرعي."},
+    {q:"إيه الفرق بين git diff وgit diff --staged؟", a:"git diff بيوري الفرق بين Working Directory والـ Staging Area (التغييرات اللي لسه معملهاش add). git diff --staged بيوري الفرق بين الـ Staging Area وآخر commit (اللي جاهز للحفظ)."},
+    {q:"ليه رسالة الـ commit المفروض تكون واضحة ومحددة؟", a:"لإن الفريق هيقرأها بعدين لفهم سبب التغيير من غير الحاجة يقرأ الكود نفسه بالتفصيل، فرسالة غامضة زي fix أو update متفدش حد."},
+    {q:"إيه أول حاجة تعملها على جهاز جديد قبل أول commit؟", a:"تعرّف نفسك لـ Git باستخدام git config --global user.name و git config --global user.email."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch3", num:"03", title:"Branching: العمل على أكتر من نسخة بالتوازي", navTitle:"Branching",
+  lede:"زيكا: عايز أجرب فكرة جديدة في الكود، بس مش عايز أخرب النسخة الأساسية اللي شغالة كويس.",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> ده بالظبط استخدام <b>Branch</b> — نسخة منفصلة من المشروع تقدر تجرب فيها براحتك، ولو الفكرة نجحت، تدمجها (merge) في النسخة الأساسية. لو فشلت، تمسح الـ branch وكأن حاجة ماحصلتش خالص.</p>
+  </div>
+
+  <h3>main (أو master) — الـ Branch الافتراضي</h3>
+  <p>أي مشروع Git بيبدأ بـ branch اسمه عادة <code class="inline">main</code> (في المشاريع الأحدث) أو <code class="inline">master</code> (الاسم القديم). ده الخط الأساسي للمشروع.</p>
+
+  <h3>الأوامر الأساسية</h3>
+  <pre><code><span class="cmt"># عرض كل الـ branches الموجودة</span>
+git branch
+
+<span class="cmt"># عمل branch جديد (من غير ما تنتقل ليه)</span>
+git branch feature-login
+
+<span class="cmt"># الانتقال لـ branch موجود</span>
+git checkout feature-login
+git switch feature-login    <span class="cmt"># الأمر الأحدث، نفس الوظيفة بالظبط</span>
+
+<span class="cmt"># عمل branch جديد والانتقال ليه في أمر واحد</span>
+git checkout -b feature-login
+git switch -c feature-login  <span class="cmt"># النسخة الأحدث من نفس الفكرة</span></code></pre>
+
+  <div class="note"><b>ليه فيه أمرين مختلفين (checkout وswitch) لنفس الفكرة؟</b> git checkout أمر قديم وكان بيُستخدم لحاجات كتير مختلفة (تبديل branches، واسترجاع ملفات كمان)، وده كان بيسبب لخبطة. git switch أضيف لاحقاً كأمر مخصص بس للـ branches، عشان يبقى أوضح. الاتنين لسه شغالين، لكن switch أنضف للاستخدام الحديث.</div>
+
+  <h3>مثال عملي كامل</h3>
+  <pre><code>git switch -c feature-login    <span class="cmt"># اتنقل لـ branch جديد</span>
+
+<span class="cmt"># عدّل الكود، جرب فكرتك</span>
+echo "login logic" >> app.py
+git add .
+git commit -m "Add login feature draft"
+
+<span class="cmt"># ارجع للـ main عشان تشوف إنه لسه زي ما هو</span>
+git switch main
+cat app.py    <span class="cmt"># التعديل مش موجود هنا، لإنه في branch تاني</span></code></pre>
+
+  <h3>عرض الفرق بصرياً بين الـ Branches</h3>
+  <div class="diagram">
+main:              A ── B ── C
+                          \\
+feature-login:             D ── E
+
+كل branch بيمشي في تاريخه الخاص، من غير ما يأثر على التاني، لحد ما تعمل merge
+  </div>
+
+  <h3>مسح Branch بعد ما تخلص منه</h3>
+  <pre><code>git branch -d feature-login     <span class="cmt"># حذف آمن (بيرفض لو فيه تغييرات مش متدمجة)</span>
+git branch -D feature-login     <span class="cmt"># حذف قسري (force)، حتى لو فيه تغييرات ضايعة</span></code></pre>
+
+  <div class="extra"><b>معلومة إضافية:</b> عمل branch في Git عملية خفيفة جداً وسريعة (مجرد pointer صغير لـ commit معين)، مش نسخة كاملة من الملفات زي ما ممكن تتخيل. عشان كده فرق العمل بتستخدم branches كتير جداً وبحرية، حتى لتجارب صغيرة.</div>
+  `,
+  qa:[
+    {q:"إيه فايدة عمل Branch منفصل بدل التعديل مباشرة على main؟", a:"بيخليك تجرب أفكار جديدة أو تطور ميزة من غير ما تأثر على النسخة الأساسية المستقرة، ولو الفكرة فشلت، تقدر تمسح الـ branch بأمان تام."},
+    {q:"إيه الفرق بين git checkout -b وgit switch -c؟", a:"نفس الوظيفة بالظبط — عمل branch جديد والانتقال ليه في أمر واحد. switch أمر أحدث ومخصص بس للـ branches، بينما checkout أقدم وكان بيُستخدم لحاجات متعددة."},
+    {q:"إيه الفرق بين git branch -d وgit branch -D؟", a:"-d حذف آمن، بيرفض المسح لو فيه تغييرات في الـ branch مش متدمجة في مكان تاني. -D حذف قسري (force) بيمسح على أي حال، حتى لو هتضيع تغييرات."},
+    {q:"إيه اسم الـ Branch الافتراضي في أغلب المشاريع الحديثة؟", a:"main (والمشاريع الأقدم كانت بتستخدم اسم master)."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch4", num:"04", title:"Merge: دمج الـ Branches", navTitle:"Merge",
+  lede:"زيكا خلص فكرته في feature-login، ودلوقتي عايز يدمجها في main.",
+  body:`
+  <div class="dialogue">
+    <p><b class="who">زيكا:</b> خلصت التعديل بتاعي، إزاي أرجعه لـ main تاني؟</p>
+    <p><b class="who k">كريم:</b> عن طريق <b>git merge</b> — بياخد كل الـ commits اللي عملتها في الـ branch بتاعك، ويدمجها في الـ branch اللي إنت واقف عليه دلوقتي.</p>
+  </div>
+
+  <h3>الخطوات الأساسية</h3>
+  <pre><code><span class="cmt"># روح للـ branch اللي عايز تدمج فيه (عادة main)</span>
+git switch main
+
+<span class="cmt"># ادمج فيه الـ branch التاني</span>
+git merge feature-login</code></pre>
+
+  <h3>نوعين من الدمج</h3>
+  <table>
+    <tr><th>النوع</th><th>يحصل امتى</th></tr>
+    <tr><td><b>Fast-forward merge</b></td><td>لو main ماتغيرش خالص من وقت ما عملت الـ branch — Git بس بيحرك المؤشر لقدام</td></tr>
+    <tr><td><b>3-way merge</b></td><td>لو main اتغير برضو في نفس الوقت — Git بيعمل commit جديد خاص بالدمج</td></tr>
+  </table>
+
+  <div class="diagram">
+Fast-forward:
+main:     A ── B
+                 \\
+feature:          C ── D
+بعد merge:  A ── B ── C ── D   (main بس اتحرك لقدام)
+
+3-way merge:
+main:     A ── B ────── E
+                 \\      /
+feature:          C ── D
+بعد merge:  A ── B ── E ── M   (M = merge commit جديد بيجمع الاتنين)
+  </div>
+
+  <h3>Merge Conflicts — لما Git مش عارف يقرر لوحده</h3>
+  <div class="dialogue">
+    <p><b class="who">زيكا:</b> طب لو أنا وزميلي عدّلنا نفس السطر بالظبط في نفس الملف؟</p>
+    <p><b class="who k">كريم:</b> هنا بيحصل <b>Merge Conflict</b> — Git مش هيقدر يقرر لوحده أنهي نسخة صح، وهيطلب منك تحل التعارض يدوياً.</p>
+  </div>
+
+  <p>لما يحصل conflict، Git بيعلّم الملف بصيغة زي كده:</p>
+  <pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+النسخة اللي في main
+=======
+النسخة اللي في feature-login
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature-login</code></pre>
+
+  <h3>خطوات حل الـ Conflict</h3>
+  <ol>
+    <li>افتح الملف، هتلاقي العلامات دي محاطة بالجزء المتعارض.</li>
+    <li>قرر إيه النسخة الصح (أو ادمج الاتنين يدوياً بنفسك)، واحذف علامات <code class="inline">&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> و<code class="inline">=======</code> و<code class="inline">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>.</li>
+    <li><code class="inline">git add &lt;file&gt;</code> — تأكيد إنك حليت التعارض في الملف ده.</li>
+    <li><code class="inline">git commit</code> — يخلص عملية الدمج بـ commit خاص بالحل.</li>
+  </ol>
+
+  <div class="warn"><b>نصيحة مهمة:</b> لو خفت من الموقف وعايز تلغي عملية الدمج كلها وترجع للحالة قبلها، استخدم <code class="inline">git merge --abort</code> قبل ما تعمل أي commit.</div>
+
+  <div class="extra"><b>معلومة إضافية:</b> أدوات زي VS Code بتوفر واجهة بصرية (Merge Editor) بتسهّل حل الـ conflicts جداً، بدل ما تتعامل مع النص الخام يدوياً.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق بين Fast-forward merge وثالث 3-way merge؟", a:"Fast-forward بيحصل لو الـ branch الأساسي (main) ماتغيرش من وقت إنشاء الـ branch التاني — Git بس بيحرك المؤشر لقدام. 3-way merge بيحصل لو الاتنين اتغيروا، وبيعمل commit جديد خاص بعملية الدمج."},
+    {q:"إمتى بيحصل Merge Conflict؟", a:"لما نفس السطر أو الجزء من الملف اتعدل بشكل مختلف في الـ branchين اللي بتحاول تدمجهم، وGit مش عارف يقرر لوحده أنهي نسخة الصح."},
+    {q:"إيه الخطوات الأساسية لحل Merge Conflict؟", a:"افتح الملف، شوف الأجزاء المتعارضة (بين علامات <<<<<<< و======= و>>>>>>>)، قرر النسخة الصح واحذف العلامات، ثم git add للملف، وأخيراً git commit لإنهاء الدمج."},
+    {q:"إيه الأمر اللي بيلغي عملية دمج كاملة وترجع للحالة اللي قبلها؟", a:"git merge --abort"}
+  ]
+});
+CHAPTERS.push({
+  id:"ch5", num:"05", title:"Remote: العمل مع GitHub", navTitle:"Remote & GitHub",
+  lede:"زيكا: كل ده كان محلي على جهازي. إزاي أشارك المشروع مع فريقي أو أرفعه على GitHub؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> عن طريق مفهوم <b>Remote</b> — نسخة من المشروع مستضافة في مكان تاني (زي GitHub)، وGit بيدّيك أوامر تتزامن بيها معاها.</p>
+  </div>
+
+  <h3>Clone — نسخ مشروع موجود بالفعل</h3>
+  <pre><code>git clone https://github.com/username/project.git</code></pre>
+  <p>بيعمل نسخة كاملة من المشروع (بكل تاريخه) على جهازك، وبيظبط الـ Remote تلقائياً باسم <code class="inline">origin</code>.</p>
+
+  <h3>ربط مشروع موجود بالفعل بـ Remote جديد</h3>
+  <pre><code>git remote add origin https://github.com/username/project.git
+git remote -v    <span class="cmt"># تأكد من الـ Remotes المربوطة</span></code></pre>
+
+  <h3>Push — رفع تغييراتك للـ Remote</h3>
+  <pre><code>git push origin main
+git push -u origin main   <span class="cmt"># -u بتربط main المحلي بـ origin/main، مرة واحدة بس</span>
+git push                   <span class="cmt"># بعد الربط، تقدر تستخدم الأمر المختصر ده</span></code></pre>
+
+  <h3>Fetch مقابل Pull — الفرق المهم اللي كتير بيلخبطوا فيه</h3>
+  <table>
+    <tr><th>الأمر</th><th>بيعمل إيه</th></tr>
+    <tr><td><code class="inline">git fetch</code></td><td>بيجيب التحديثات من الـ Remote، لكن <b>مايدمجهاش</b> تلقائياً في الكود بتاعك</td></tr>
+    <tr><td><code class="inline">git pull</code></td><td>بيعمل fetch + merge في أمر واحد — بيجيب التحديثات <b>ويدمجها</b> فوراً</td></tr>
+  </table>
+
+  <div class="diagram">
+git fetch:  Remote changes ──► تتحمل محلياً بس، الكود بتاعك لسه زي ما هو
+                                   (تقدر تراجعها الأول بـ git diff قبل الدمج)
+
+git pull:   Remote changes ──► تتحمل وتتدمج فوراً في الكود بتاعك
+  </div>
+
+  <div class="note"><b>نصيحة عملية:</b> <code class="inline">git fetch</code> أأمن، لإنه بيخليك تشوف إيه اللي اتغير قبل ما تدمجه فعلياً. <code class="inline">git pull</code> أسرع وأسهل للاستخدام اليومي، لكن لو فيه تعارضات، ممكن تفاجئك وسط شغلك.</div>
+
+  <h3>مثال دورة عمل يومية كاملة مع فريق</h3>
+  <pre><code>git pull origin main          <span class="cmt"># اجمع آخر تحديثات من الفريق</span>
+
+<span class="cmt"># اشتغل، عدّل، commit عادي</span>
+git add .
+git commit -m "Add feature X"
+
+git push origin main          <span class="cmt"># ارفع شغلك للفريق</span></code></pre>
+
+  <div class="extra"><b>معلومة إضافية:</b> لو حاولت تعمل <code class="inline">push</code> وحد تاني كان عمل push قبلك بتغييرات مختلفة، Git هيرفض ويطلب منك تعمل <code class="inline">pull</code> الأول عشان تدمج التغييرات، وبعدين تعمل push تاني.</div>
+  `,
+  qa:[
+    {q:"إيه هو الـ Remote في Git؟", a:"نسخة من المشروع مستضافة في مكان خارجي (زي GitHub)، وGit بيوفر أوامر (زي push وpull) للتزامن بينها وبين النسخة المحلية على جهازك."},
+    {q:"إيه الفرق الجوهري بين git fetch وgit pull؟", a:"git fetch بيجيب التحديثات من الـ Remote بس مايدمجهاش تلقائياً في كودك، بيخليك تراجعها الأول. git pull بيعمل fetch ثم merge في أمر واحد فوراً."},
+    {q:"إيه وظيفة الـ -u في git push -u origin main؟", a:"بتربط الـ branch المحلي main بالـ branch المقابل على origin بشكل دائم، فبعدها تقدر تستخدم git push بس من غير ما تحدد origin main كل مرة."},
+    {q:"إيه اللي بيحصل لو حاولت تعمل push وحد تاني عمل push قبلك بتغييرات مختلفة؟", a:"Git هيرفض عملية الـ push، ويطلب منك تعمل pull الأول عشان تدمج التغييرات الجديدة، وبعدين تحاول push تاني."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch6", num:"06", title:"Pull Requests وسير العمل مع الفريق", navTitle:"Pull Requests",
+  lede:"زيكا: في فريق حقيقي، هل أي حد بيعمل push مباشر على main؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> لأ خالص، ده خطر جداً في فريق حقيقي. الطريقة المتبعة هي <b>Pull Request</b> (اختصاراً PR) — بتطلب من الفريق يراجع تغييراتك ويوافق عليها قبل ما تنضم لـ main.</p>
+  </div>
+
+  <h3>الفكرة الأساسية</h3>
+  <div class="diagram">
+1. تعمل branch جديد لميزة معينة
+2. تشتغل عليه، تعمل commits
+3. تعمل push للـ branch ده على GitHub
+4. تفتح Pull Request: "عايز أدمج feature-login في main"
+5. زمايلك يراجعوا الكود (Code Review)، يعلّقوا، يطلبوا تعديلات
+6. بعد الموافقة (Approve)، يتم الدمج (Merge) رسمياً في main
+  </div>
+
+  <h3>خطوات عملية من البداية للنهاية</h3>
+  <pre><code>git switch -c feature-payment
+<span class="cmt"># اشتغل، عدّل، commit</span>
+git add .
+git commit -m "Add payment integration"
+
+<span class="cmt"># ارفع الـ branch على GitHub (مش main، الـ branch بتاعك)</span>
+git push -u origin feature-payment</code></pre>
+
+  <p>بعد كده، تروح GitHub نفسه، وتلاقي زرار "Compare & pull request" بيظهر تلقائياً، وتفتح الـ PR من الواجهة.</p>
+
+  <h3>Code Review — ليه مهم؟</h3>
+  <ul>
+    <li>يكتشف أخطاء أو مشاكل قبل ما توصل لـ main.</li>
+    <li>يشارك المعرفة بين أعضاء الفريق.</li>
+    <li>يحافظ على معايير كتابة كود موحدة في المشروع كله.</li>
+  </ul>
+
+  <h3>بعد الموافقة: طرق الدمج المختلفة على GitHub</h3>
+  <table>
+    <tr><th>الطريقة</th><th>الوصف</th></tr>
+    <tr><td><b>Merge commit</b></td><td>بيحافظ على كل الـ commits الأصلية + commit دمج جديد</td></tr>
+    <tr><td><b>Squash and merge</b></td><td>بيجمع كل commits الـ branch في commit واحد نظيف قبل الدمج</td></tr>
+    <tr><td><b>Rebase and merge</b></td><td>بيعيد ترتيب الـ commits فوق main مباشرة، من غير commit دمج إضافي (هنشرح Rebase بالتفصيل الفصل الجاي)</td></tr>
+  </table>
+
+  <div class="note"><b>الأشيع في فرق كتير:</b> "Squash and merge" — بيخلي تاريخ main نظيف جداً، commit واحد واضح لكل ميزة، بدل عشرات commits صغيرة (زي "fix typo", "oops", "try again") اللي كانت في الـ branch الأصلي.</div>
+
+  <div class="extra"><b>معلومة إضافية:</b> فرق كتير بتستخدم Branch Protection Rules على GitHub، بتمنع أي حد (حتى admins أحياناً) من عمل push مباشر على main، وتجبر كل تغيير يمر عن طريق Pull Request معتمد.</div>
+  `,
+  qa:[
+    {q:"إيه هو الـ Pull Request؟", a:"طلب رسمي لدمج تغييرات من branch معين في branch تاني (عادة main)، بيسمح للفريق بمراجعة الكود والموافقة عليه قبل الدمج الفعلي."},
+    {q:"اذكر فايدتين من الـ Code Review قبل الدمج", a:"اكتشاف أخطاء أو مشاكل قبل ما توصل للكود الأساسي، ومشاركة المعرفة بين أعضاء الفريق حول التغييرات الجديدة."},
+    {q:"إيه الفرق بين Merge commit وSquash and merge؟", a:"Merge commit بيحافظ على كل الـ commits الأصلية زي ما هي، بالإضافة لـ commit دمج جديد. Squash and merge بيجمع كل الـ commits في commit واحد نظيف قبل الدمج، فتاريخ main بيبقى أنظف."},
+    {q:"إيه هي Branch Protection Rules؟", a:"إعدادات على GitHub بتمنع أي push مباشر على branch معين (زي main)، وتجبر كل تغيير يمر عن طريق Pull Request معتمد من الفريق."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch7", num:"07", title:"Rebase: إعادة كتابة التاريخ بشكل نظيف", navTitle:"Rebase",
+  lede:"زيكا: تاريخ main بتاعي بقى فيه merge commits كتير معقدة. فيه طريقة أنضف؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> أيوه، اسمها <b>Rebase</b>. بدل ما تعمل merge commit يجمع الفرعين، rebase بياخد الـ commits بتاعتك ويعيد "لصقهم" فوق آخر نسخة من main، وكأنك بدأت الشغل بعد آخر تحديث من الأصل.</p>
+  </div>
+
+  <h3>الفرق البصري بين Merge وRebase</h3>
+  <div class="diagram">
+قبل:
+main:     A ── B ── C
+                 \\
+feature:          D ── E
+
+بعد Merge:
+main:     A ── B ── C ────── M
+                 \\           /
+feature:          D ── E ───
+
+بعد Rebase:
+main:     A ── B ── C
+                        \\
+feature:                 D' ── E'   (نفس التغييرات، لكن commits جديدة فوق C مباشرة)
+  </div>
+
+  <h3>الأمر الأساسي</h3>
+  <pre><code>git switch feature-login
+git rebase main</code></pre>
+
+  <p>ده معناه: "خد كل الـ commits اللي عملتها في feature-login، واعمل replay ليهم فوق آخر نسخة من main، وكأنك بدأت من هنا من الأول".</p>
+
+  <h3>Interactive Rebase — تنظيف تاريخك بنفسك</h3>
+  <p>من أقوى استخدامات rebase — بتخليك تعدّل، تدمج، أو تحذف commits قبل ما تشاركها مع حد:</p>
+  <pre><code>git rebase -i HEAD~3    <span class="cmt"># آخر 3 commits</span></code></pre>
+  <p>بيفتحلك محرر نصوص فيه خيارات لكل commit:</p>
+  <table>
+    <tr><th>الأمر</th><th>الوظيفة</th></tr>
+    <tr><td><b>pick</b></td><td>خليه زي ما هو</td></tr>
+    <tr><td><b>reword</b></td><td>غيّر رسالة الـ commit بس</td></tr>
+    <tr><td><b>squash</b></td><td>ادمجه مع الـ commit اللي قبله في commit واحد</td></tr>
+    <tr><td><b>drop</b></td><td>احذف الـ commit ده تماماً</td></tr>
+  </table>
+
+  <div class="warn"><b>القاعدة الذهبية لـ Rebase — لازم تحفظها:</b> ماتعملش rebase أبداً لـ commits اتشاركت بالفعل مع فريقك (اتعمللها push وحد تاني سحبها). Rebase بيغيّر "هوية" الـ commits (الـ hash بتاعها)، فلو حد تاني عنده نسخة قديمة، هيحصل تعارض فظيع. Rebase آمن بس على الشغل المحلي اللي لسه ماتشاركش.</div>
+
+  <h3>لو حصل Conflict أثناء Rebase</h3>
+  <pre><code><span class="cmt"># حل التعارض في الملفات يدوياً زي أي conflict عادي</span>
+git add &lt;resolved-file&gt;
+git rebase --continue
+
+<span class="cmt"># أو لو عايز تلغي العملية كلها وترجع للحالة الأصلية</span>
+git rebase --abort</code></pre>
+
+  <div class="note"><b>ليه فرق كتير بتفضل rebase؟</b> تاريخ المشروع بيبقى خط مستقيم واضح (linear history)، أسهل بكتير في المراجعة والفهم، بدل شبكة معقدة من merge commits متشابكة.</div>
+
+  <div class="extra"><b>معلومة إضافية:</b> فيه خيار اسمه <code class="inline">git pull --rebase</code> بيستخدم rebase بدل merge وقت سحب التحديثات، عشان يحافظ على تاريخ نظيف حتى في العمل اليومي مع الفريق.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق الأساسي بين Merge وRebase؟", a:"Merge بيعمل commit جديد يجمع الفرعين مع بعض، محتفظ بكل التاريخ الأصلي. Rebase بياخد الـ commits ويعيد لصقها فوق آخر نسخة من الفرع الأساسي، فيطلع تاريخ خطي (linear) نظيف بدون commit دمج إضافي."},
+    {q:"إيه القاعدة الذهبية اللي لازم تلتزم بيها قبل عمل Rebase؟", a:"ماتعملش rebase لـ commits اتشاركت بالفعل مع فريقك (حد تاني سحبها). Rebase بيغيّر هوية الـ commits، وده هيسبب تعارضات خطيرة لو حد تاني عنده النسخة القديمة."},
+    {q:"إيه وظيفة squash في الـ Interactive Rebase؟", a:"بتدمج الـ commit مع الـ commit اللي قبله في commit واحد، مفيد لتنظيف تاريخ كتير من الـ commits الصغيرة (زي fix typo) قبل مشاركته."},
+    {q:"إزاي تلغي عملية Rebase كاملة وترجع للحالة قبلها؟", a:"git rebase --abort"}
+  ]
+});
+CHAPTERS.push({
+  id:"ch8", num:"08", title:"Stash: خبّي شغلك مؤقتاً", navTitle:"Stash",
+  lede:"زيكا: أنا وسط تعديل كبير في feature-login، وفجأة لازم أروح أصلح bug عاجل في main. إيه الحل؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> مش لازم تعمل commit ناقص عشان تنقل الـ branch. استخدم <b>git stash</b> — بيخبي كل تغييراتك الحالية جانباً مؤقتاً، وبيرجّع الملفات لآخر حالة commit نظيفة، وتقدر ترجعها تاني وقت ما تحب.</p>
+  </div>
+
+  <h3>الأوامر الأساسية</h3>
+  <pre><code><span class="cmt"># خبّي التغييرات الحالية</span>
+git stash
+
+<span class="cmt"># مع رسالة توضيحية (مفيد لو هيكون عندك أكتر من stash)</span>
+git stash save "WIP: login form validation"</code></pre>
+
+  <p>دلوقتي الملفات رجعت نظيفة زي آخر commit، وتقدر تنقل لـ branch تاني براحتك من غير ما تفقد شغلك.</p>
+
+  <h3>استرجاع الشغل اللي خبيته</h3>
+  <pre><code><span class="cmt"># رجّع آخر stash واحذفه من القائمة</span>
+git stash pop
+
+<span class="cmt"># رجّعه بس سيبه في القائمة كمان (للاحتياط)</span>
+git stash apply</code></pre>
+
+  <h3>إدارة أكتر من stash</h3>
+  <pre><code><span class="cmt"># عرض كل الـ stashes المحفوظة</span>
+git stash list
+<span class="cmt"># stash@{0}: WIP: login form validation</span>
+<span class="cmt"># stash@{1}: WIP: payment refactor</span>
+
+<span class="cmt"># استرجاع stash محدد (مش بس آخر واحد)</span>
+git stash pop stash@{1}
+
+<span class="cmt"># حذف stash معين بدون استرجاعه</span>
+git stash drop stash@{0}
+
+<span class="cmt"># حذف كل الـ stashes خالص</span>
+git stash clear</code></pre>
+
+  <h3>سيناريو عملي كامل</h3>
+  <div class="diagram">
+1. إنت وسط تعديل في feature-login (ملفات معدّلة، مش commit بعد)
+2. طلب عاجل: صلّح bug في main فوراً
+3. git stash                  ← خبّي التعديلات
+4. git switch main
+5. git switch -c hotfix-bug    ← اعمل branch للإصلاح العاجل
+6. أصلح، commit، push، PR
+7. git switch feature-login    ← ارجع لشغلك الأصلي
+8. git stash pop                ← رجّع تعديلاتك زي ما هي بالظبط
+  </div>
+
+  <div class="extra"><b>معلومة إضافية:</b> git stash بيخبي بشكل افتراضي بس الملفات المتابعة (tracked) واللي اتعدلت. لو عايز يخبي حتى الملفات الجديدة اللي لسه معملتهاش git add (untracked)، استخدم <code class="inline">git stash -u</code>.</div>
+  `,
+  qa:[
+    {q:"إيه فايدة git stash الأساسية؟", a:"بيخبي التغييرات الحالية غير المحفوظة (uncommitted) مؤقتاً جانباً، وبيرجّع الملفات لآخر حالة commit نظيفة، عشان تقدر تنقل لـ branch تاني من غير ما تفقد شغلك أو تضطر تعمل commit ناقص."},
+    {q:"إيه الفرق بين git stash pop وgit stash apply؟", a:"git stash pop بيرجّع آخر stash ويحذفه من القائمة. git stash apply بيرجّعه بس بيسيبه في القائمة كمان، لو عايز تطبقه في مكان تاني كذلك."},
+    {q:"إزاي تخبي حتى الملفات الجديدة (untracked) مع git stash؟", a:"باستخدام git stash -u — بشكل افتراضي stash بيخبي بس الملفات المتابعة (tracked) اللي اتعدلت."},
+    {q:"إزاي تشوف كل الـ stashes المحفوظة عندك؟", a:"git stash list"}
+  ]
+});
+CHAPTERS.push({
+  id:"ch9", num:"09", title:"Undo Commands: إزاي تتراجع عن غلطة", navTitle:"Undo Commands",
+  lede:"زيكا: عملت commit بالغلط لملف مش المفروض يتحفظ. إزاي أرجع بالظبط؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> Git عنده كذا أمر تراجع مختلف، وكل واحد بيتصرف بطريقة مختلفة تماماً. الفرق بينهم مهم جداً تفهمه كويس، عشان متخربش حاجة بالغلط.</p>
+  </div>
+
+  <h3>1. git restore — التراجع عن تعديلات في ملف (مش commit بعد)</h3>
+  <pre><code><span class="cmt"># رجّع ملف لآخر نسخة commit، وألغي أي تعديل عليه</span>
+git restore file.txt
+
+<span class="cmt"># إخراج ملف من الـ Staging Area (بعد git add)، لكن سيب التعديلات فيه</span>
+git restore --staged file.txt</code></pre>
+
+  <h3>2. git reset — التراجع عن commits</h3>
+  <table>
+    <tr><th>النوع</th><th>بيعمل إيه</th></tr>
+    <tr><td><code class="inline">--soft</code></td><td>يرجع الـ commit، لكن يسيب التغييرات في الـ Staging Area (جاهزة لـ commit تاني)</td></tr>
+    <tr><td><code class="inline">--mixed</code> (الافتراضي)</td><td>يرجع الـ commit والـ staging، لكن يسيب التغييرات في الملفات نفسها</td></tr>
+    <tr><td><code class="inline">--hard</code></td><td>يمسح كل حاجة تماماً — الـ commit والتغييرات في الملفات كمان</td></tr>
+  </table>
+
+  <pre><code>git reset --soft HEAD~1     <span class="cmt"># رجّع آخر commit، خلي التغييرات staged</span>
+git reset --mixed HEAD~1    <span class="cmt"># رجّع آخر commit، التغييرات موجودة بس مش staged</span>
+git reset --hard HEAD~1     <span class="cmt"># امسح آخر commit وكل تغييراته تماماً</span></code></pre>
+
+  <div class="warn"><b>تحذير خطير جداً:</b> <code class="inline">git reset --hard</code> بيمسح تغييراتك <b>نهائياً</b> بدون رجعة سهلة (إلا عن طريق reflog، هنشرحه بعد شوية). استخدمه بحذر شديد، وتأكد 100% إنك مش محتاج التغييرات دي قبل ما تنفذه.</div>
+
+  <h3>3. git revert — التراجع الآمن للتاريخ المشترك</h3>
+  <pre><code>git revert &lt;commit-hash&gt;</code></pre>
+  <p>بدل ما يمسح الـ commit من التاريخ (زي reset)، بيعمل commit <b>جديد</b> بيعكس (undo) تأثير الـ commit القديم، وبيسيب التاريخ الأصلي زي ما هو بالكامل.</p>
+
+  <div class="note"><b>ليه revert أهم من reset في العمل الجماعي؟</b> لو الـ commit اللي عايز تلغيه اتشارك بالفعل مع الفريق (حد تاني سحبه)، استخدام reset هيغير التاريخ ويسبب مشاكل تزامن رهيبة. revert آمن 100% للتاريخ المشترك، لإنه بيضيف commit جديد بدل ما يمسح القديم.</p></div>
+
+  <h3>مقارنة سريعة: إمتى تستخدم إيه</h3>
+  <table>
+    <tr><th>الموقف</th><th>الأمر المناسب</th></tr>
+    <tr><td>عدّلت ملف بس مش عملتله commit، وعايز تلغي التعديل</td><td>git restore</td></tr>
+    <tr><td>عملت git add بالغلط وعايز تشيله من staging</td><td>git restore --staged</td></tr>
+    <tr><td>عملت commit محلي بس (لسه ماعملتش push)، وعايز تلغيه</td><td>git reset</td></tr>
+    <tr><td>عايز تلغي تأثير commit اتشارك بالفعل مع الفريق</td><td>git revert</td></tr>
+  </table>
+
+  <h3>4. git reflog — شبكة الأمان الأخيرة</h3>
+  <pre><code>git reflog</code></pre>
+  <p>بيسجل كل حركة عملتها في Git (حتى لو مسحتها بـ reset --hard)، لفترة معينة. لو خربت حاجة بالغلط، reflog غالباً هينقذك.</p>
+  <pre><code><span class="cmt"># رجّع لحالة معينة من الـ reflog</span>
+git reset --hard HEAD@{2}</code></pre>
+
+  <div class="extra"><b>معلومة إضافية:</b> reflog بتاعك محلي بس على جهازك، مش بيتشارك مع الفريق أو GitHub، وبيتم تنظيفه تلقائياً بعد فترة (عادة 90 يوم افتراضياً)، فمش وسيلة نسخ احتياطي دائمة.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق بين git restore وgit reset؟", a:"git restore بيشتغل على مستوى الملفات (تعديلات لسه ماعملهاش commit). git reset بيشتغل على مستوى الـ commits نفسها، وبيرجع تاريخ الـ branch لنقطة سابقة."},
+    {q:"إيه الفرق بين reset --soft و reset --mixed و reset --hard؟", a:"soft بيرجع الـ commit بس يسيب التغييرات staged. mixed (الافتراضي) بيرجع الـ commit والـ staging بس يسيب التغييرات في الملفات. hard بيمسح كل حاجة تماماً، الـ commit والتغييرات في الملفات كمان."},
+    {q:"ليه git revert أأمن من git reset في العمل الجماعي؟", a:"revert بيعمل commit جديد يعكس تأثير القديم، ويسيب التاريخ الأصلي زي ما هو. reset بيغيّر التاريخ فعلياً، وده خطير لو الـ commit اتشارك بالفعل مع فريق تاني."},
+    {q:"إيه فايدة git reflog؟", a:"بيسجل كل حركة عملتها في Git محلياً، حتى المحذوفة بـ reset --hard، فبيكون شبكة أمان أخيرة لو خربت حاجة بالغلط وعايز ترجعها."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch10", num:"10", title:"Tags، Cherry-pick، وgitignore", navTitle:"Tags & Cherry-pick",
+  lede:"زيكا: عايز أعلّم على نسخة معينة إنها Release رسمية v1.0. وعايز كمان آخد commit واحد بس من branch تاني.",
+  body:`
+  <h3>Tags — تعليم نقطة معينة في التاريخ</h3>
+  <p>بعكس الـ Branch اللي بيتحرك مع كل commit جديد، الـ <b>Tag</b> بيثبت على commit واحد للأبد — مفيد جداً لتعليم إصدارات رسمية (releases).</p>
+  <pre><code><span class="cmt"># Tag بسيط</span>
+git tag v1.0
+
+<span class="cmt"># Tag مع رسالة توضيحية (annotated، الأفضل للـ releases الرسمية)</span>
+git tag -a v1.0 -m "First stable release"
+
+<span class="cmt"># عرض كل الـ tags</span>
+git tag
+
+<span class="cmt"># رفع tag معين للـ remote</span>
+git push origin v1.0
+
+<span class="cmt"># رفع كل الـ tags دفعة واحدة</span>
+git push origin --tags</code></pre>
+
+  <div class="note"><b>الفرق بين Tag وBranch:</b> Branch بيتحرك تلقائياً مع كل commit جديد عليه. Tag ثابت في مكانه للأبد بمجرد ما تعمله، بيمثل نقطة تاريخية محددة (زي "ده بالظبط الكود اللي نزل للمستخدمين في v1.0").</div>
+
+  <h3>Cherry-pick — خد commit واحد بس من branch تاني</h3>
+  <div class="dialogue">
+    <p><b class="who">زيكا:</b> فيه bug fix في branch تاني، بس مش عايز أدمج الـ branch كله، عايز الـ commit ده بس.</p>
+    <p><b class="who k">كريم:</b> ده بالظبط استخدام <b>git cherry-pick</b> — بياخد commit واحد محدد من أي مكان، وبيطبقه على الـ branch اللي إنت واقف عليه.</p>
+  </div>
+  <pre><code>git log other-branch --oneline    <span class="cmt"># لاقي الـ hash بتاع الـ commit اللي عايزه</span>
+git cherry-pick &lt;commit-hash&gt;</code></pre>
+
+  <div class="warn"><b>احتمال Conflict:</b> Cherry-pick ممكن يسبب تعارضات زي أي merge عادي، لو الكود حوالين الـ commit ده مختلف بين الـ branches. حلها بنفس طريقة حل الـ conflicts العادية.</div>
+
+  <h3>.gitignore — الملفات اللي Git يتجاهلها</h3>
+  <p>ملف نصي بسيط في جذر المشروع، بيحدد أي ملفات أو مجلدات Git يتجاهلها تماماً ومايراقبهاش خالص.</p>
+  <pre><code><span class="cmt"># محتوى .gitignore نموذجي</span>
+node_modules/
+.env
+*.log
+__pycache__/
+.DS_Store
+dist/</code></pre>
+
+  <div class="warn"><b>ليه .gitignore مهم جداً؟</b> ملفات زي <code class="inline">.env</code> (فيها passwords وAPI keys) أو <code class="inline">node_modules</code> (ضخمة ومولدة تلقائياً) متستاهلش تتسجل في تاريخ Git أبداً — لأسباب أمنية وحجمية.</div>
+
+  <h3>git config — تخصيص سلوك Git</h3>
+  <pre><code><span class="cmt"># إعدادات على مستوى المستخدم كله (كل المشاريع)</span>
+git config --global user.name "Zeeka"
+git config --global user.email "zeeka@example.com"
+git config --global core.editor "nano"
+
+<span class="cmt"># إعدادات على مستوى مشروع واحد بس (بدون --global)</span>
+git config user.email "work-email@company.com"
+
+<span class="cmt"># عرض كل الإعدادات الحالية</span>
+git config --list</code></pre>
+
+  <div class="extra"><b>معلومة إضافية:</b> فيه موقع اسمه gitignore.io بيولّدلك ملف .gitignore جاهز حسب لغة البرمجة والأدوات اللي بتستخدمها في مشروعك، بدل ما تكتبه من الصفر كل مرة.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق بين Tag وBranch؟", a:"Branch بيتحرك تلقائياً مع كل commit جديد عليه. Tag ثابت في مكانه للأبد بمجرد إنشاءه، وبيمثل نقطة تاريخية محددة زي إصدار رسمي معين."},
+    {q:"إيه استخدام git cherry-pick؟", a:"ياخد commit واحد محدد من أي branch، ويطبقه على الـ branch اللي إنت واقف عليه، من غير الحاجة تدمج الـ branch كله."},
+    {q:"ليه ملفات زي .env مهم تتحط في .gitignore؟", a:"لإنها بتحتوي على بيانات حساسة (زي passwords وAPI keys)، ومتستاهلش تتسجل في تاريخ Git أبداً لأسباب أمنية، خصوصاً لو المشروع هيترفع على مكان عام زي GitHub."},
+    {q:"إيه الفرق بين git config --global وgit config عادي؟", a:"--global بيطبق الإعداد على كل المشاريع على جهازك. من غير --global، الإعداد بيتطبق بس على المشروع الحالي اللي إنت واقف فيه."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch11", num:"11", title:"Git Workflows: إزاي الفرق الحقيقية بتنظم شغلها", navTitle:"Git Workflows",
+  lede:"زيكا: كل ده تعلمته، بس إزاي فريق كامل بيتفق على طريقة موحدة للعمل مع بعض؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> فيه استراتيجيات جاهزة ومتفق عليها اسمها <b>Git Workflows</b> — بتحدد إزاي الفريق يستخدم الـ branches والـ merges بشكل منظم ومتوقع للكل.</p>
+  </div>
+
+  <h3>1. Git Flow — الأكتر تنظيماً (والأعقد)</h3>
+  <table>
+    <tr><th>الـ Branch</th><th>الغرض</th></tr>
+    <tr><td><b>main</b></td><td>الكود المنشور فعلياً للمستخدمين (production)</td></tr>
+    <tr><td><b>develop</b></td><td>آخر تطوير مجمّع، قبل الإصدار الرسمي</td></tr>
+    <tr><td><b>feature/*</b></td><td>ميزة جديدة، بتتفرع من develop وترجع له</td></tr>
+    <tr><td><b>release/*</b></td><td>تجهيز إصدار معين قبل نزوله رسمياً</td></tr>
+    <tr><td><b>hotfix/*</b></td><td>إصلاح عاجل مباشرة من main نفسه</td></tr>
+  </table>
+  <div class="diagram">
+main:      ──────●──────────────●──────────
+                  \\              /
+develop:   ────●───●────●───●───●──────
+                \\  /        \\  /
+feature:         ●●          ●●
+  </div>
+  <div class="note"><b>مناسب لـ:</b> مشاريع كبيرة بإصدارات رسمية منتظمة (زي تطبيقات موبايل بتنزل نسخ محددة)، لكن معقد شوية للمشاريع الصغيرة أو السريعة.</div>
+
+  <h3>2. GitHub Flow — الأبسط والأشهر حالياً</h3>
+  <ul>
+    <li><code class="inline">main</code> دايماً قابل للنشر (deployable) في أي وقت.</li>
+    <li>أي ميزة جديدة = branch جديد من main مباشرة.</li>
+    <li>لما تخلص، تفتح Pull Request، تتراجع، تتدمج في main.</li>
+    <li>main بينزل للإنتاج فوراً أو بشكل شبه فوري بعد كل دمج.</li>
+  </ul>
+  <div class="diagram">
+main:  ──●───●───────●───●───────●──
+          \\           \\           \\
+           ●──●         ●──●        ●──●
+          feature-1    feature-2   feature-3
+  </div>
+  <div class="note"><b>مناسب لـ:</b> فرق بتنشر باستمرار (Continuous Deployment)، زي معظم تطبيقات الويب الحديثة. أبسط بكتير من Git Flow، ومناسب لمعظم المشاريع الصغيرة والمتوسطة.</div>
+
+  <h3>3. Trunk-Based Development — الأسرع</h3>
+  <ul>
+    <li>كل التطوير على branch واحد رئيسي (trunk/main) مباشرة، أو branches قصيرة العمر جداً (ساعات مش أيام).</li>
+    <li>بيعتمد بشكل كبير على Feature Flags — تفعيل/تعطيل ميزات معينة بإعداد، بدل branches منفصلة طويلة.</li>
+  </ul>
+  <div class="note"><b>مناسب لـ:</b> فرق كبيرة جداً وخبرة عالية، بتنشر عشرات المرات يومياً (زي شركات التكنولوجيا الكبرى). محتاج انضباط عالي جداً وCI/CD قوي جداً.</div>
+
+  <h3>جدول مقارنة سريع</h3>
+  <table>
+    <tr><th>Workflow</th><th>التعقيد</th><th>مناسب لـ</th></tr>
+    <tr><td>Git Flow</td><td>عالي</td><td>إصدارات رسمية منتظمة، مشاريع كبيرة</td></tr>
+    <tr><td>GitHub Flow</td><td>متوسط</td><td>نشر مستمر، معظم مشاريع الويب</td></tr>
+    <tr><td>Trunk-Based</td><td>يحتاج انضباط عالي</td><td>فرق كبيرة بنشر يومي متكرر جداً</td></tr>
+  </table>
+
+  <h3>Conventional Commits — معيار كتابة رسائل الـ Commit</h3>
+  <p>كتير من الفرق بتتفق على صيغة موحدة لرسائل الـ commit، عشان تسهل التتبع والأتمتة (زي توليد changelog تلقائي):</p>
+  <pre><code>feat: add user login functionality
+fix: resolve null pointer in payment service
+docs: update API documentation
+refactor: simplify database connection logic
+test: add unit tests for auth module</code></pre>
+
+  <div class="extra"><b>معلومة إضافية:</b> مفيش Workflow "صح" بشكل مطلق — الاختيار بيعتمد على حجم الفريق، سرعة النشر المطلوبة، ونوع المشروع نفسه. كتير من الفرق بتبدأ بـ GitHub Flow البسيط، وتتطور لحاجة أعقد لو احتاجت فعلاً.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق الأساسي بين Git Flow وGitHub Flow؟", a:"Git Flow معقد أكتر وفيه branches متعددة (develop, release, hotfix) مناسب لإصدارات رسمية منتظمة. GitHub Flow أبسط بكتير، كل ميزة branch من main مباشرة وترجع له عن طريق Pull Request، مناسب للنشر المستمر."},
+    {q:"إيه أنسب Workflow لفريق بينشر التطبيق باستمرار (Continuous Deployment)؟", a:"GitHub Flow — بساطته وسرعته تناسب النشر المستمر أكتر من Git Flow المعقد."},
+    {q:"إيه هو Trunk-Based Development ومحتاج إيه عشان ينجح؟", a:"استراتيجية بيشتغل فيها كل الفريق على branch رئيسي واحد مباشرة أو branches قصيرة جداً، ومحتاج انضباط عالي وCI/CD قوي وغالباً استخدام Feature Flags."},
+    {q:"إيه فايدة استخدام معيار زي Conventional Commits؟", a:"بيوحد صيغة رسائل الـ commit (زي feat:, fix:, docs:)، بيسهل تتبع التغييرات ويسمح بأتمتة أشياء زي توليد changelog تلقائي."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch12", num:"12", title:"مرجع Git الشامل: كل الأوامر في مكان واحد", navTitle:"مرجع أوامر Git",
+  lede:"كريم: ده مش فصل تعليمي جديد، ده دفتر مرجعي ترجعله بسرعة وقت ما تنسى صيغة أمر معين.",
+  body:`
+  <h3>1. الإعداد الأولي</h3>
+  <pre><code>git init                                  <span class="cmt"># بداية مشروع جديد</span>
+git clone &lt;url&gt;                            <span class="cmt"># نسخ مشروع موجود</span>
+git config --global user.name "Zeeka"
+git config --global user.email "email@example.com"
+git config --list</code></pre>
+
+  <h3>2. الأوامر اليومية الأساسية</h3>
+  <pre><code>git status                                 <span class="cmt"># حالة المشروع دلوقتي</span>
+git add &lt;file&gt;                              <span class="cmt"># ملف محدد</span>
+git add .                                    <span class="cmt"># كل التغييرات في المجلد الحالي</span>
+git add -A                                    <span class="cmt"># كل التغييرات في المشروع كله</span>
+git commit -m "message"
+git commit -am "message"                       <span class="cmt"># add + commit في أمر واحد (للملفات المتابعة بس)</span>
+git log
+git log --oneline
+git log --oneline --graph --all
+git diff
+git diff --staged</code></pre>
+
+  <h3>3. Branching</h3>
+  <pre><code>git branch                                 <span class="cmt"># عرض الـ branches</span>
+git branch &lt;name&gt;                           <span class="cmt"># إنشاء branch جديد</span>
+git branch -d &lt;name&gt;                        <span class="cmt"># حذف آمن</span>
+git branch -D &lt;name&gt;                        <span class="cmt"># حذف قسري</span>
+git switch &lt;name&gt;                           <span class="cmt"># الانتقال لـ branch</span>
+git switch -c &lt;name&gt;                        <span class="cmt"># إنشاء + انتقال</span>
+git checkout &lt;name&gt;                         <span class="cmt"># الطريقة القديمة، نفس الوظيفة</span>
+git checkout -b &lt;name&gt;</code></pre>
+
+  <h3>4. Merge & Rebase</h3>
+  <pre><code>git merge &lt;branch&gt;
+git merge --abort
+git rebase &lt;branch&gt;
+git rebase -i HEAD~3                        <span class="cmt"># interactive rebase</span>
+git rebase --continue
+git rebase --abort</code></pre>
+
+  <h3>5. Remote & Sync</h3>
+  <pre><code>git remote add origin &lt;url&gt;
+git remote -v
+git push origin &lt;branch&gt;
+git push -u origin &lt;branch&gt;
+git push origin --tags
+git fetch
+git pull
+git pull --rebase</code></pre>
+
+  <h3>6. Undo & History</h3>
+  <pre><code>git restore &lt;file&gt;                          <span class="cmt"># إلغاء تعديل غير staged</span>
+git restore --staged &lt;file&gt;                 <span class="cmt"># إخراج من staging</span>
+git reset --soft HEAD~1
+git reset --mixed HEAD~1
+git reset --hard HEAD~1
+git revert &lt;commit-hash&gt;
+git reflog</code></pre>
+
+  <h3>7. Stash</h3>
+  <pre><code>git stash
+git stash save "message"
+git stash list
+git stash pop
+git stash apply
+git stash drop
+git stash clear
+git stash -u                                 <span class="cmt"># شمل الملفات الجديدة (untracked)</span></code></pre>
+
+  <h3>8. Tags & Cherry-pick</h3>
+  <pre><code>git tag
+git tag v1.0
+git tag -a v1.0 -m "message"
+git push origin v1.0
+git cherry-pick &lt;commit-hash&gt;</code></pre>
+
+  <h3>9. التشخيص والمعلومات</h3>
+  <pre><code>git show &lt;commit-hash&gt;                      <span class="cmt"># تفاصيل commit معين</span>
+git blame &lt;file&gt;                             <span class="cmt"># مين عدّل كل سطر وإمتى</span>
+git log --author="Zeeka"                     <span class="cmt"># commits شخص معين</span>
+git log --since="2 weeks ago"
+git log &lt;file&gt;                               <span class="cmt"># تاريخ ملف معين</span>
+git bisect start                             <span class="cmt"># بحث ثنائي عن commit سبب bug</span></code></pre>
+
+  <h3>10. ملفات ومقارنات</h3>
+  <pre><code>git rm &lt;file&gt;                               <span class="cmt"># حذف ملف + تسجيل الحذف</span>
+git mv &lt;old&gt; &lt;new&gt;                           <span class="cmt"># نقل/إعادة تسمية ملف</span>
+git clean -n                                 <span class="cmt"># معاينة الملفات اللي هتتمسح (untracked)</span>
+git clean -f                                 <span class="cmt"># حذف untracked files فعلياً</span></code></pre>
+
+  <div class="warn"><b>تحذير عام:</b> أي أمر فيه <code class="inline">--hard</code> أو <code class="inline">-D</code> أو <code class="inline">clean -f</code> بيمسح بيانات **بدون تراجع سهل**. راجع الأمر مرتين قبل التنفيذ، خصوصاً لو بتشتغل على مشروع فيه فريق.</div>
+
+  <h3>جدول: أنهي أمر أستخدم في أنهي موقف</h3>
+  <table>
+    <tr><th>الموقف</th><th>الأمر</th></tr>
+    <tr><td>غيرت رأيي في ملف لسه معملتش عليه commit</td><td>git restore</td></tr>
+    <tr><td>عايز ألغي آخر commit بس أحتفظ بالتعديلات</td><td>git reset --soft HEAD~1</td></tr>
+    <tr><td>عايز ألغي تأثير commit اتشارك مع الفريق</td><td>git revert</td></tr>
+    <tr><td>محتاج أنقل branch بسرعة وسط شغل مش خلصته</td><td>git stash</td></tr>
+    <tr><td>عايز أنظف تاريخ commits قبل ما أشاركه</td><td>git rebase -i</td></tr>
+    <tr><td>عايز commit واحد بس من branch تاني</td><td>git cherry-pick</td></tr>
+    <tr><td>خربت حاجة وعايز أرجع لحالة قديمة اتمسحت</td><td>git reflog</td></tr>
+  </table>
+
+  <div class="extra"><b>معلومة إضافية:</b> تقدر تعمل alias (اختصارات) لأي أمر بتستخدمه كتير:
+  <pre style="margin-top:8px"><code>git config --global alias.co checkout
+git config --global alias.st status
+git config --global alias.lg "log --oneline --graph --all"
+
+<span class="cmt"># بعدها تقدر تكتب بس</span>
+git st
+git lg</code></pre>
+  </div>
+  `,
+  qa:[
+    {q:"إيه الأمر اللي بيوريك مين عدّل كل سطر في ملف معين وإمتى؟", a:"git blame <file>"},
+    {q:"إيه الأمر اللي بيعمل add وcommit في خطوة واحدة (للملفات المتابعة already)؟", a:"git commit -am «message» — بس ده بيشتغل بس للملفات اللي Git بيتابعها بالفعل، مش للملفات الجديدة تماماً (untracked)."},
+    {q:"إيه الفرق بين git clean -n وgit clean -f؟", a:"git clean -n بيعرض معاينة للملفات اللي هتتمسح (untracked) بدون تنفيذ فعلي. git clean -f بينفذ الحذف فعلياً."},
+    {q:"إزاي تعمل اختصار (alias) لأمر بتستخدمه كتير في Git؟", a:"git config --global alias.<اسم-مختصر> «<الأمر الكامل>»، زي git config --global alias.st status."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch13", num:"13", title:"الخلاصة الشاملة وتمرين نهائي", navTitle:"الخلاصة والتمرين",
+  lede:"كريم: خلاص يا زيكا، دلوقتي عندك كل أدوات Git من الأساسيات للاحتراف. خلينا نجمعها في صورة واحدة.",
+  body:`
+  <h3>الرحلة الكاملة: من git init لـ Pull Request معتمد</h3>
+  <div class="diagram">
+1. git init / git clone           ← بداية المشروع
+2. git branch / git switch -c     ← افتح branch لميزة جديدة
+3. عدّل الكود
+4. git status / git diff          ← راجع إيه اللي اتغير
+5. git add                        ← جهّز التغييرات
+6. git commit -m "..."            ← احفظها في التاريخ
+7. git push -u origin <branch>    ← ارفعها على GitHub
+8. افتح Pull Request              ← اطلب مراجعة من الفريق
+9. Code Review + تعديلات لو لزم
+10. Merge (أو Squash/Rebase) في main
+11. git pull                      ← الفريق كله ياخد آخر تحديث
+  </div>
+
+  <h3>ملخص المفاهيم الأساسية</h3>
+  <table>
+    <tr><th>المفهوم</th><th>الفكرة في جملة واحدة</th></tr>
+    <tr><td>Working/Staging/Repository</td><td>3 مراحل أي ملف بيمر بيها قبل الحفظ الدائم</td></tr>
+    <tr><td>Branch</td><td>نسخة منفصلة تجرب فيها بدون التأثير على main</td></tr>
+    <tr><td>Merge</td><td>دمج التغييرات من branch لـ branch تاني</td></tr>
+    <tr><td>Conflict</td><td>لما Git مش عارف يقرر لوحده أنهي نسخة صح</td></tr>
+    <tr><td>Remote</td><td>نسخة من المشروع مستضافة في مكان خارجي (GitHub)</td></tr>
+    <tr><td>Fetch vs Pull</td><td>Fetch بيجيب بس، Pull بيجيب ويدمج فوراً</td></tr>
+    <tr><td>Rebase</td><td>إعادة كتابة التاريخ بشكل خطي نظيف</td></tr>
+    <tr><td>Stash</td><td>خبي شغل مؤقت من غير commit</td></tr>
+    <tr><td>Reset vs Revert</td><td>Reset بيمسح التاريخ، Revert بيعكسه بأمان</td></tr>
+    <tr><td>Tag</td><td>علامة ثابتة على نقطة تاريخية معينة (إصدار)</td></tr>
+    <tr><td>Cherry-pick</td><td>ناخد commit واحد بس من مكان تاني</td></tr>
+    <tr><td>Git Workflow</td><td>استراتيجية متفق عليها لتنظيم شغل الفريق</td></tr>
+  </table>
+
+  <h3>🎯 تمرين شامل نهائي</h3>
+  <div class="assign-block">
+    <span class="tag">التمرين النهائي</span>
+    <ol>
+      <li>اعمل مشروع جديد بـ git init، واعمل أول commit بملف README.md.</li>
+      <li>افتح branch اسمه feature-about، أضف فيه ملف about.txt، اعمل commit.</li>
+      <li>ارجع لـ main، وعدّل نفس ملف README.md بشكل مختلف (لتحصل على تعارض لاحقاً).</li>
+      <li>حاول تعمل merge للـ feature-about في main، وحل أي conflict يظهر يدوياً.</li>
+      <li>جرب git stash: عدّل ملف من غير commit، اعمل stash، بدّل branch، ارجع واسترجع الشغل بـ stash pop.</li>
+      <li>اعمل commit فيه غلطة (اسم ملف غلط مثلاً)، وجرب رجّعه بـ git reset --soft، وبعدين بـ git revert لو كان already اتشارك.</li>
+      <li>اعمل tag اسمه v1.0 على آخر commit، وارفعه لـ remote (لو عندك repo على GitHub).</li>
+      <li>اكتب في نقاط: أنهي Git Workflow (Git Flow / GitHub Flow / Trunk-Based) هيكون أنسب لمشروع شخصي صغير بتشتغل عليه لوحدك، وليه؟</li>
+    </ol>
+  </div>
+
+  <h3>إيه اللي فاتنا (للاستكشاف لاحقاً)</h3>
+  <ul>
+    <li><b>Git Submodules</b> — تضمين مشروع Git تاني بالكامل جوه مشروعك.</li>
+    <li><b>Git Hooks</b> — سكريبتات تشتغل تلقائياً عند أحداث معينة (زي قبل أي commit).</li>
+    <li><b>git bisect بالتفصيل</b> — بحث ثنائي ذكي لاكتشاف أنهي commit بالظبط سبب bug معين.</li>
+    <li><b>Signed Commits</b> — توقيع الـ commits رقمياً للتأكد من هوية صاحبها.</li>
+    <li><b>Monorepos وأدوات إدارتها</b> — إدارة مشاريع ضخمة متعددة في repository واحد.</li>
+  </ul>
+
+  <div class="extra"><b>كلمة كريم الأخيرة:</b> Git بيبان معقد الأول بسبب كتر الأوامر، لكن الحقيقة إن 90% من استخدامك اليومي هيكون بس: status, add, commit, push, pull, branch, merge. الباقي (rebase, cherry-pick, reflog) أدوات قوية تستخدمها وقت الحاجة الفعلية بس. متحاولش تحفظ كل حاجة — ارجع للمرجع الشامل وقت ما تحتاج، والممارسة هي اللي هتثبت المعلومة فعلياً.</div>
+  `,
+  qa:[
+    {q:"رتب الخطوات الأساسية من فتح branch جديد لحد دمجه في main عن طريق GitHub", a:"git branch/switch -c لفتح branch، تعديل الكود، git add وcommit، git push لرفعه، فتح Pull Request، Code Review، وأخيراً Merge في main."},
+    {q:"إيه أهم 6-7 أوامر Git هتستخدمها يومياً في 90% من وقتك؟", a:"git status, git add, git commit, git push, git pull, git branch, git merge — الباقي (rebase, cherry-pick, reflog) أدوات متخصصة تستخدمها وقت الحاجة الفعلية بس."},
+    {q:"إيه الفرق الجوهري بين Reset وRevert اللي لازم تفتكره دايماً؟", a:"Reset بيمسح أو يغير التاريخ فعلياً (خطير للتاريخ المشترك). Revert بيعكس تأثير commit عن طريق commit جديد، محافظ على التاريخ الأصلي كامل، وآمن للمشاركة مع فريق."}
+  ]
+});
+
+/* ============ END DATA ============ */
+
+/* ---------- Rendering ---------- */
+const navContainer = document.getElementById('navContainer');
+const chaptersEl = document.getElementById('content').querySelector('#chapters');
+
+function escId(s){ return s.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g,'-'); }
+
+function renderNav(){
+  let html = '<div class="nav-group-label">المحتويات</div>';
+  html += `<a class="nav-link" data-target="intro" href="#intro"><span class="n">00</span><span>البداية</span></a>`;
+  CHAPTERS.forEach(ch=>{
+    html += `<a class="nav-link" data-target="${ch.id}" href="#${ch.id}"><span class="n">${ch.num}</span><span>${ch.navTitle||ch.title}</span></a>`;
+  });
+  navContainer.innerHTML = html;
+}
+
+function renderChapters(){
+  let html = '';
+  CHAPTERS.forEach(ch=>{
+    html += `<section class="chapter" id="${ch.id}">
+      <div class="chapter-head"><span class="chapter-num">${ch.num}</span><h2>${ch.title}</h2></div>
+      ${ch.lede ? `<div class="lede">${ch.lede}</div>` : ''}
+      <div class="chapter-body">${ch.body}</div>`;
+
+    if(ch.qa && ch.qa.length){
+      html += `<div class="qa-title"><h3>🧠 أسئلة وأجوبة</h3><span class="qa-badge">${ch.qa.length} سؤال</span></div>`;
+      ch.qa.forEach(item=>{
+        html += `<details class="qa"><summary>${item.q}</summary><div class="qa-body">${item.a}</div></details>`;
+      });
+    }
+    html += `</section>`;
+  });
+  chaptersEl.innerHTML = html;
+}
+
+renderNav();
+renderChapters();
+
+/* ---------- Copy buttons for code blocks ---------- */
+document.querySelectorAll('pre').forEach(pre=>{
+  const codeEl = pre.querySelector('code');
+  const btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'نسخ';
+  btn.onclick = ()=>{
+    const text = codeEl ? codeEl.innerText : pre.innerText;
+    navigator.clipboard.writeText(text.trim());
+    btn.textContent = 'اتنسخ ✓';
+    setTimeout(()=>btn.textContent='نسخ', 1400);
+  };
+  pre.appendChild(btn);
+});
+
+/* ---------- Scroll spy ---------- */
+const navLinks = [...document.querySelectorAll('.nav-link')];
+const sections = [document.getElementById('intro'), ...CHAPTERS.map(c=>document.getElementById(c.id))];
+const pathCurrent = document.getElementById('pathCurrent');
+const progressLabel = document.getElementById('progressLabel');
+
+function onScroll(){
+  let currentId = 'intro';
+  for(const sec of sections){
+    if(!sec) continue;
+    const rect = sec.getBoundingClientRect();
+    if(rect.top <= 140) currentId = sec.id;
+  }
+  navLinks.forEach(l=>l.classList.toggle('active', l.dataset.target===currentId));
+  pathCurrent.textContent = currentId;
+  const idx = sections.findIndex(s=>s && s.id===currentId);
+  progressLabel.textContent = `${idx+1} / ${sections.length}`;
+}
+document.addEventListener('scroll', onScroll, {passive:true});
+onScroll();
+
+/* ---------- Mobile menu ---------- */
+const sidebar = document.getElementById('sidebar');
+document.getElementById('menuBtn').onclick = ()=> sidebar.classList.toggle('open');
+navLinks.forEach(l=> l.addEventListener('click', ()=> sidebar.classList.remove('open')));
+
+/* ---------- Search ---------- */
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('input', ()=>{
+  const q = searchInput.value.trim();
+  if(!q){
+    navLinks.forEach(l=>l.classList.remove('hidden'));
+    return;
+  }
+  navLinks.forEach(l=>{
+    const target = l.dataset.target;
+    const sec = document.getElementById(target);
+    const text = (sec ? sec.innerText : l.innerText);
+    l.classList.toggle('hidden', !text.includes(q));
+  });
+});
+</script>
+</body>
+</html>

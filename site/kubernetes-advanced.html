@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kubernetes Advanced: حكاية زكا وكريم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800;900&family=Tajawal:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#11151b;
+    --bg-alt:#161b22;
+    --panel:#1a212b;
+    --panel-2:#1f2731;
+    --border:#2a323d;
+    --amber:#4f9fe8;
+    --amber-dim:#2f628a;
+    --teal:#5cb8a6;
+    --text:#e9e7de;
+    --text-dim:#96a0af;
+    --text-faint:#5c6675;
+    --danger:#d9695f;
+    --radius:10px;
+    --serif-ar:'Cairo',sans-serif;
+    --body-ar:'Tajawal',sans-serif;
+    --mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--body-ar);
+    line-height:1.85;
+    font-size:16.5px;
+  }
+  ::selection{background:var(--amber);color:#141821;}
+
+  /* ---------- Layout ---------- */
+  .app{display:flex; min-height:100vh;}
+  .sidebar{
+    width:300px; flex-shrink:0;
+    background:var(--bg-alt);
+    border-left:1px solid var(--border);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:22px 18px 60px;
+  }
+  .sidebar::-webkit-scrollbar{width:8px;}
+  .sidebar::-webkit-scrollbar-thumb{background:var(--panel-2); border-radius:8px;}
+
+  .brand{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--amber); box-shadow:0 0 10px var(--amber);}
+  .brand-title{font-family:var(--serif-ar); font-weight:900; font-size:1.15rem; color:var(--text);}
+  .brand-sub{font-family:var(--mono); font-size:.72rem; color:var(--text-faint); margin:2px 0 18px; letter-spacing:.3px;}
+
+  .search-box{position:relative; margin-bottom:16px;}
+  .search-box input{
+    width:100%; background:var(--panel); border:1px solid var(--border); color:var(--text);
+    padding:10px 14px; border-radius:8px; font-family:var(--body-ar); font-size:.85rem;
+  }
+  .search-box input:focus{outline:none; border-color:var(--amber-dim);}
+  .search-box input::placeholder{color:var(--text-faint);}
+
+  .nav-group-label{
+    font-family:var(--mono); font-size:.68rem; color:var(--text-faint);
+    text-transform:uppercase; letter-spacing:1px; margin:18px 4px 8px;
+  }
+  .nav-link{
+    display:flex; align-items:baseline; gap:8px;
+    padding:8px 10px; border-radius:8px; color:var(--text-dim);
+    text-decoration:none; font-size:.88rem; cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .nav-link .n{font-family:var(--mono); color:var(--text-faint); font-size:.72rem; min-width:20px;}
+  .nav-link:hover{background:var(--panel); color:var(--text);}
+  .nav-link.active{background:var(--panel-2); color:var(--amber); font-weight:600;}
+  .nav-link.hidden{display:none;}
+
+  .main{flex:1; min-width:0;}
+  .topbar{
+    position:sticky; top:0; z-index:5;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 34px; background:rgba(17,21,27,.85); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);
+  }
+  .topbar .path{font-family:var(--mono); font-size:.78rem; color:var(--text-faint); direction:ltr; unicode-bidi:isolate;}
+  .topbar .path span{color:var(--amber);}
+  #progressLabel{direction:ltr; unicode-bidi:isolate;}
+  .menu-btn{display:none; background:none; border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:8px; cursor:pointer; font-size:1.1rem;}
+
+  .content{max-width:880px; margin:0 auto; padding:50px 34px 140px;}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:40px 0 60px; border-bottom:1px solid var(--border); margin-bottom:50px;}
+  .hero .eyebrow{font-family:var(--mono); color:var(--amber); font-size:.82rem; letter-spacing:.5px; margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+  .hero h1{font-family:var(--serif-ar); font-size:2.6rem; font-weight:900; margin:0 0 16px; line-height:1.3;}
+  .hero h1 em{color:var(--amber); font-style:normal;}
+  .hero p{color:var(--text-dim); font-size:1.05rem; max-width:640px; margin:0 0 26px;}
+  .terminal{
+    background:#0d1116; border:1px solid var(--border); border-radius:12px;
+    padding:20px 22px; font-family:var(--mono); font-size:.86rem; color:#c9d1d9;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
+    direction:ltr; text-align:left; unicode-bidi:isolate;
+  }
+  .terminal .tbar{display:flex; gap:6px; margin-bottom:14px;}
+  .terminal .tbar span{width:11px;height:11px;border-radius:50%; display:inline-block;}
+  .terminal .tbar span:nth-child(1){background:#d9695f;}
+  .terminal .tbar span:nth-child(2){background:#e6a83d;}
+  .terminal .tbar span:nth-child(3){background:#5cb8a6;}
+  .terminal .line{margin:0 0 6px;}
+  .terminal .prompt{color:var(--teal);}
+  .terminal .cmd{color:#e9e7de;}
+  .terminal .out{color:var(--text-faint);}
+  .caret{display:inline-block; width:7px; height:1em; background:var(--amber); vertical-align:middle; animation:blink 1s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+
+  .stat-row{display:flex; gap:28px; margin-top:32px; flex-wrap:wrap;}
+  .stat{}
+  .stat b{font-family:var(--serif-ar); font-size:1.6rem; color:var(--amber); display:block;}
+  .stat span{font-size:.78rem; color:var(--text-faint);}
+
+  /* ---------- Chapter ---------- */
+  .chapter{margin-bottom:70px; scroll-margin-top:90px;}
+  .chapter-head{display:flex; align-items:center; gap:14px; margin-bottom:6px;}
+  .chapter-num{
+    font-family:var(--mono); color:var(--amber); border:1px solid var(--amber-dim);
+    border-radius:6px; padding:2px 9px; font-size:.78rem;
+  }
+  .chapter h2{font-family:var(--serif-ar); font-size:1.9rem; font-weight:800; margin:0;}
+  .chapter .lede{color:var(--text-dim); font-size:.98rem; margin:10px 0 28px; border-right:3px solid var(--amber-dim); padding-right:16px;}
+
+  .dialogue{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px 22px; margin:18px 0;}
+  .dialogue p{margin:0 0 12px;}
+  .dialogue p:last-child{margin-bottom:0;}
+  .dialogue b.who{color:var(--amber); font-family:var(--body-ar); font-weight:700;}
+  .dialogue b.who.k{color:var(--teal);}
+
+  .content h3{font-family:var(--serif-ar); font-size:1.25rem; font-weight:700; margin:32px 0 12px; color:var(--text);}
+  .content h4{font-family:var(--serif-ar); font-size:1.05rem; font-weight:700; margin:22px 0 10px; color:var(--amber);}
+  .content p{margin:0 0 14px; color:#d8d6cd;}
+  .content ul, .content ol{margin:0 0 16px; padding-right:22px; color:#d8d6cd;}
+  .content li{margin-bottom:6px;}
+
+  pre{
+    background:#0d1116; border:1px solid var(--border); border-radius:10px;
+    padding:40px 18px 16px; overflow-x:auto; margin:14px 0 20px; position:relative;
+    direction:ltr; text-align:left;
+  }
+  pre code{font-family:var(--mono); font-size:.84rem; color:#c9d1d9; line-height:1.7; white-space:pre;}
+  .cmt{color:#6b7684;}
+  .copy-btn{
+    position:absolute; left:10px; top:10px; background:var(--panel-2); border:1px solid var(--border);
+    color:var(--text-dim); font-size:.68rem; padding:4px 10px; border-radius:6px; cursor:pointer;
+    font-family:var(--body-ar); direction:rtl; z-index:2; line-height:1.4;
+  }
+  .copy-btn:hover{color:var(--amber); border-color:var(--amber-dim);}
+
+  table{width:100%; border-collapse:collapse; margin:16px 0 22px; font-size:.9rem;}
+  th, td{border:1px solid var(--border); padding:9px 12px; text-align:right;}
+  th{background:var(--panel); color:var(--amber); font-family:var(--body-ar); font-weight:700;}
+  td{color:#d8d6cd;}
+  tr:nth-child(even) td{background:rgba(255,255,255,.015);}
+  code.inline{background:var(--panel-2); border:1px solid var(--border); border-radius:5px; padding:1px 7px; font-family:var(--mono); font-size:.82em; color:var(--amber); direction:ltr; unicode-bidi:isolate; display:inline-block;}
+
+  .note{background:rgba(79,159,232,.08); border:1px solid var(--amber-dim); border-radius:10px; padding:14px 18px; margin:18px 0; font-size:.92rem;}
+  .note b{color:var(--amber);}
+  .warn{background:rgba(217,105,95,.08); border:1px solid #6b3a35; border-radius:10px; padding:14px 18px; margin:18px 0; font-size:.92rem;}
+  .warn b{color:var(--danger);}
+  .extra{background:rgba(92,184,166,.07); border:1px solid #2f5951; border-radius:10px; padding:14px 18px; margin:18px 0; font-size:.92rem;}
+  .extra b{color:var(--teal);}
+
+  .diagram{
+    background:#0d1116; border:1px solid var(--border); border-radius:10px; padding:18px;
+    font-family:var(--mono); font-size:.82rem; color:#c9d1d9; overflow-x:auto; direction:ltr; text-align:left; margin:16px 0 22px;
+  }
+
+  /* ---------- Q&A ---------- */
+  .qa-title{display:flex; align-items:center; gap:10px; margin:36px 0 14px;}
+  .qa-title h3{margin:0;}
+  .qa-badge{font-family:var(--mono); font-size:.68rem; color:var(--bg); background:var(--amber); padding:2px 8px; border-radius:20px; font-weight:700;}
+  details.qa{
+    background:var(--panel); border:1px solid var(--border); border-radius:9px;
+    margin-bottom:10px; overflow:hidden;
+  }
+  details.qa summary{
+    list-style:none; cursor:pointer; padding:13px 18px; font-weight:600; color:var(--text);
+    display:flex; align-items:center; gap:10px; font-size:.94rem;
+  }
+  details.qa summary::-webkit-details-marker{display:none;}
+  details.qa summary::before{
+    content:"›"; color:var(--amber); font-family:var(--mono); font-size:1.1rem;
+    transition:transform .18s; display:inline-block;
+  }
+  details.qa[open] summary::before{transform:rotate(90deg);}
+  details.qa .qa-body{padding:0 18px 16px; color:#d8d6cd; font-size:.92rem; border-top:1px solid var(--border); padding-top:12px;}
+  details.qa .qa-body pre{margin-top:10px;}
+
+  /* ---------- Assignments ---------- */
+  .assign-block{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:24px 26px; margin:20px 0 30px;}
+  .assign-block h4{margin-top:0; color:var(--amber); font-size:1.05rem;}
+  .assign-block .tag{display:inline-block; background:var(--panel-2); color:var(--teal); font-family:var(--mono); font-size:.68rem; padding:3px 9px; border-radius:20px; margin-bottom:12px;}
+  .step-label{font-family:var(--mono); font-size:.72rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:.5px; margin:16px 0 6px;}
+
+  footer{border-top:1px solid var(--border); padding:40px 34px; text-align:center; color:var(--text-faint); font-size:.85rem;}
+
+  /* ---------- Search highlight ---------- */
+  mark{background:var(--amber); color:#141821; border-radius:2px; padding:0 2px;}
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 900px){
+    .sidebar{
+      position:fixed; right:0; top:0; z-index:20; transform:translateX(100%);
+      transition:transform .25s; width:82%; max-width:320px; box-shadow:-10px 0 40px rgba(0,0,0,.4);
+    }
+    .sidebar.open{transform:translateX(0);}
+    .menu-btn{display:inline-block;}
+    .content{padding:34px 20px 100px;}
+    .hero h1{font-size:1.9rem;}
+    .topbar{padding:12px 18px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="dot"></span>
+      <span class="brand-title">Kubernetes Advanced: حكاية زكا وكريم</span>
+    </div>
+    <div class="brand-sub">$ kubectl get chapters</div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="دور في الكتاب... (بحث)">
+    </div>
+
+    <div id="navContainer"></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <div class="path">~/k8s-advanced/<span id="pathCurrent">intro</span></div>
+      <div style="font-family:var(--mono); font-size:.72rem; color:var(--text-faint);" id="progressLabel"></div>
+    </div>
+
+    <div class="content" id="content">
+
+      <section class="hero" id="intro">
+        <div class="eyebrow">$ kubectl whoami<span class="caret"></span></div>
+        <h1>تتعلم <em>Kubernetes</em> زي ما بتتفرج على حكاية،<br>مش زي ما بتحفظ محاضرة.</h1>
+        <p>الموقع ده الجزء المتقدم من منهج Kubernetes — بعد ما اتعلمت الأساسيات (Pod, Deployment, Service...)، هنا هنكمّل بالـ Workloads المتخصصة، الـ Autoscaling، الأمان، والـ Production-grade tools اللي أي مهندس DevOps محترف لازم يعرفها. متحكي بنفس أسلوب زكا وكريم، بشرح وأمثلة YAML حقيقية.</p>
+
+        <div class="terminal">
+          <div class="tbar"><span></span><span></span><span></span></div>
+          <div class="line"><span class="prompt">zekaa@learning</span><span class="cmd">:~$ </span><span class="cmd">kubectl explain advanced-topics</span></div>
+          <div class="line out">11 chapters · DaemonSet/StatefulSet/Jobs + HPA + NetworkPolicy + Monitoring + GitOps</div>
+          <div class="line"><span class="prompt">zekaa@learning</span><span class="cmd">:~$ </span><span class="cmd">kubectl level-up --to=production<span class="caret"></span></span></div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat"><b>11</b><span>فصل شرح كامل</span></div>
+          <div class="stat"><b>40+</b><span>مثال YAML عملي</span></div>
+          <div class="stat"><b>50+</b><span>سؤال وجواب سريع</span></div>
+          <div class="stat"><b>100%</b><span>مصطلحات تقنية بالإنجليزي</span></div>
+        </div>
+      </section>
+
+      <div id="chapters"></div>
+
+    </div>
+
+    <footer>
+      $ kubectl apply -f production_ready.yaml — كتاب Kubernetes Advanced: حكاية زكا وكريم
+    </footer>
+  </div>
+
+</div>
+
+<script>
+/* ============ DATA WILL BE INSERTED HERE ============ */
+const CHAPTERS = [];
+CHAPTERS.push({
+  id:"ch1", num:"01", title:"DaemonSet: تطبيق على كل Node", navTitle:"DaemonSet",
+  lede:"زكا: عايز أشغّل أداة مراقبة (monitoring agent) على كل Node في الـ Cluster، حتى لو زودت Nodes جديدة بعدين. إزاي؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> ده بالظبط استخدام <b>DaemonSet</b>. بعكس Deployment اللي بيوزع عدد معين من الـ Pods بدون علاقة بعدد الـ Nodes، الـ DaemonSet بيضمن إن نسخة واحدة بالظبط من الـ Pod تشتغل على <b>كل Node</b> في الـ Cluster — تلقائياً.</p>
+  </div>
+
+  <h3>الفرق الجوهري عن Deployment</h3>
+  <table>
+    <tr><th></th><th>Deployment</th><th>DaemonSet</th></tr>
+    <tr><td>عدد الـ Pods</td><td>محدد يدوياً (replicas: 3 مثلاً)</td><td>= عدد الـ Nodes تلقائياً</td></tr>
+    <tr><td>Node جديد يتضاف؟</td><td>مفيش تأثير تلقائي</td><td>Pod جديد بيتعمل عليه فوراً</td></tr>
+    <tr><td>Node يتشال؟</td><td>Pods بترحل لأي Node تاني</td><td>الـ Pod بتاعه يختفي معاه</td></tr>
+  </table>
+
+  <h3>استخدامات حقيقية لـ DaemonSet</h3>
+  <ul>
+    <li><b>Log collection</b> — زي Fluentd أو Filebeat، لازم يشتغل على كل Node عشان يجمع الـ logs بتاعة كل الـ Pods عليه.</li>
+    <li><b>Monitoring agents</b> — زي Prometheus Node Exporter، بيجمع metrics عن صحة الـ Node نفسه.</li>
+    <li><b>Networking plugins</b> — زي CNI plugins (Calico, Weave)، لازم يشتغلوا على كل Node عشان الشبكة تشتغل صح.</li>
+    <li><b>Storage daemons</b> — زي Ceph أو GlusterFS agents.</li>
+  </ul>
+
+  <h3>مثال YAML</h3>
+  <pre><code>apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-monitoring-agent
+spec:
+  selector:
+    matchLabels:
+      app: monitoring-agent
+  template:
+    metadata:
+      labels:
+        app: monitoring-agent
+    spec:
+      containers:
+        - name: agent
+          image: prom/node-exporter:latest
+          ports:
+            - containerPort: 9100</code></pre>
+
+  <div class="note"><b>لاحظ البنية:</b> نفس منطق selector/template اللي اتعلمناه في ReplicaSet وDeployment بالظبط. الفرق الوحيد هو <code class="inline">kind: DaemonSet</code> ومفيش حقل <code class="inline">replicas</code> خالص — لإن العدد بيتحدد تلقائياً بعدد الـ Nodes.</div>
+
+  <div class="extra"><b>معلومة إضافية:</b> تقدر تستثني نودز معينة من DaemonSet باستخدام <code class="inline">nodeSelector</code> أو <code class="inline">tolerations</code> (هنشرحهم بالتفصيل في فصل Node Affinity لاحقاً).</div>
+  `,
+  qa:[
+    {q:"إيه الفرق الجوهري بين Deployment وDaemonSet؟", a:"Deployment بيدير عدد محدد يدوياً من الـ Pods بدون علاقة بعدد الـ Nodes. DaemonSet بيضمن نسخة واحدة من الـ Pod على كل Node تلقائياً، وبيتحدث تلقائياً لو Nodes اتضافت أو اتشالت."},
+    {q:"اذكر مثالين على استخدامات حقيقية لـ DaemonSet", a:"Log collection agents (زي Fluentd) وMonitoring agents (زي Prometheus Node Exporter) — كلاهما لازم يشتغل على كل Node."},
+    {q:"إيه اللي بيحصل للـ Pod بتاع DaemonSet لو الـ Node اللي هو عليه اتشال من الـ Cluster؟", a:"الـ Pod بيختفي معاه، بعكس Deployment اللي بيعيد جدولة الـ Pods على Node تاني."},
+    {q:"ليه مفيش حقل replicas في ملف DaemonSet؟", a:"لإن عدد الـ Pods بيتحدد تلقائياً بعدد الـ Nodes في الـ Cluster، مش بقيمة ثابتة إنت بتحددها."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch2", num:"02", title:"StatefulSet: لما الهوية الثابتة مهمة", navTitle:"StatefulSet",
+  lede:"زكا: عايز أشغّل قاعدة بيانات موزعة، بس كل نسخة محتاجة تحتفظ بهويتها وبياناتها الخاصة. Deployment مش هيكفي هنا؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> صح، Deployment مش مناسب هنا. فاكر إن الـ Pods في Deployment أسماءها عشوائية (hash) وبتتبدل باستمرار؟ ده مناسب لتطبيقات stateless (زي nginx). لكن قواعد البيانات محتاجة <b>StatefulSet</b>.</p>
+  </div>
+
+  <h3>الخصائص الثلاثة اللي StatefulSet بيوفرها</h3>
+  <ul>
+    <li><b>أسماء ثابتة ومتوقعة</b> — مش hash عشوائي، بل <code class="inline">pod-name-0</code>, <code class="inline">pod-name-1</code>, <code class="inline">pod-name-2</code>... بالترتيب.</li>
+    <li><b>Storage منفصل وثابت لكل نسخة</b> — كل Pod بياخد PersistentVolumeClaim خاص بيه، ولو الـ Pod اتمسح ورجع، بيرجعله <b>نفس</b> الـ storage القديم.</li>
+    <li><b>ترتيب في الإنشاء والحذف</b> — الـ Pods بتتعمل واحد ورا التاني بالترتيب (0, 1, 2...)، ولما تتحذف بتتحذف بالعكس.</li>
+  </ul>
+
+  <h3>مثال YAML</h3>
+  <pre><code>apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-db
+spec:
+  serviceName: "postgres-service"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi</code></pre>
+
+  <div class="note"><b>لاحظ <code class="inline">volumeClaimTemplates</code>:</b> ده الفرق الأكبر عن Deployment — بدل PVC واحد مشترك، كل نسخة (postgres-db-0, postgres-db-1, postgres-db-2) بتاخد PVC منفصل خاص بيها، وبيفضل مربوط بيها حتى لو اتعمل لها restart.</div>
+
+  <h3>أسماء الـ Pods بالتفصيل</h3>
+  <pre><code>postgres-db-0   ← أول نسخة (بتتعمل الأول، وبتتحذف الأخير)
+postgres-db-1   ← تاني نسخة
+postgres-db-2   ← تالت نسخة</code></pre>
+
+  <div class="extra"><b>معلومة إضافية:</b> StatefulSet محتاج <code class="inline">Headless Service</code> (نوع خاص من Service بـ <code class="inline">clusterIP: None</code>) عشان كل Pod ياخد DNS name ثابت خاص بيه (زي <code class="inline">postgres-db-0.postgres-service</code>)، مش بس IP مشترك.</div>
+  `,
+  qa:[
+    {q:"ليه Deployment مش مناسب لقاعدة بيانات موزعة؟", a:"لإن Pods الـ Deployment مالهاش أسماء ثابتة ولا storage ثابت مرتبط بكل نسخة، بينما قواعد البيانات محتاجة كل نسخة تحتفظ بهويتها وبياناتها الخاصة بشكل دائم."},
+    {q:"اذكر الخصائص الثلاثة الأساسية اللي StatefulSet بيوفرها", a:"أسماء ثابتة ومتوقعة (pod-0, pod-1...)، storage منفصل وثابت لكل نسخة، وترتيب محدد في الإنشاء والحذف."},
+    {q:"إيه هو volumeClaimTemplates وليه مهم في StatefulSet؟", a:"بيخلي كل نسخة من الـ Pod تاخد PersistentVolumeClaim منفصل خاص بيها، بدل PVC واحد مشترك، وده بيضمن إن كل نسخة تحتفظ ببياناتها الخاصة حتى بعد restart."},
+    {q:"إيه اسم الـ Service الخاص اللي StatefulSet محتاجه عشان كل Pod ياخد DNS name ثابت؟", a:"Headless Service، بيتحدد بقيمة clusterIP: None."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch3", num:"03", title:"Job & CronJob: مهام تنتهي بدل تطبيقات دايمة", navTitle:"Job & CronJob",
+  lede:"زكا: عايز أشغّل سكريبت يعمل migration لقاعدة البيانات مرة واحدة بس وخلاص. مش محتاج Pod يفضل شغال للأبد.",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> Deployment وStatefulSet اتصمموا لتطبيقات <b>دايمة الشغل</b> — لو الـ Pod خلص أو مات، بيرجع تاني فوراً. لكن إنت عايز عكس ده: مهمة تشتغل، تخلص بنجاح، وتقف. ده بالظبط دور <b>Job</b>.</p>
+  </div>
+
+  <h3>Job — مهمة تنفذ وتنتهي</h3>
+  <pre><code>apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migration
+spec:
+  template:
+    spec:
+      containers:
+        - name: migration
+          image: my-app:latest
+          command: ["python", "migrate.py"]
+      restartPolicy: Never
+  backoffLimit: 3</code></pre>
+
+  <table>
+    <tr><th>الحقل</th><th>الوظيفة</th></tr>
+    <tr><td><code class="inline">restartPolicy: Never</code></td><td>لو الـ container فشل، ماتعملوش restart، اعمل Pod جديد بدل منه</td></tr>
+    <tr><td><code class="inline">backoffLimit</code></td><td>أقصى عدد محاولات لو المهمة فشلت، قبل ما Kubernetes يستسلم ويعتبرها فشلت نهائياً</td></tr>
+  </table>
+
+  <div class="note"><b>الفرق عن Pod عادي:</b> لو عملت Pod عادي ونفذ سكريبت وخلص، هيفضل في حالة <code class="inline">Completed</code> لكن محدش بيراقبه أو يعيد المحاولة لو فشل. Job بيراقب فعلياً لحد ما ينجح، وبيعيد المحاولة حسب backoffLimit.</div>
+
+  <h3>CronJob — نفس فكرة Job، لكن على جدول زمني متكرر</h3>
+  <p>لو عايز نفس المهمة دي تتكرر (زي backup يومي، أو تقرير أسبوعي)، تستخدم <b>CronJob</b> — بيستخدم نفس صيغة الـ cron التقليدية في Linux.</p>
+  <pre><code>apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nightly-backup
+spec:
+  schedule: "0 2 * * *"   <span class="cmt"># كل يوم الساعة 2 الصبح</span>
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: backup-tool:latest
+              command: ["/bin/backup.sh"]
+          restartPolicy: OnFailure</code></pre>
+
+  <h3>صيغة الـ Schedule (Cron Syntax)</h3>
+  <pre><code>  ┌───────── minute (0-59)
+  │ ┌───────── hour (0-23)
+  │ │ ┌───────── day of month (1-31)
+  │ │ │ ┌───────── month (1-12)
+  │ │ │ │ ┌───────── day of week (0-6, Sunday=0)
+  │ │ │ │ │
+  * * * * *
+
+أمثلة:
+"0 2 * * *"     → كل يوم الساعة 2 صباحاً
+"*/15 * * * *"  → كل 15 دقيقة
+"0 0 * * 0"     → كل يوم أحد الساعة 12 بالليل</code></pre>
+
+  <div class="extra"><b>معلومة إضافية:</b> CronJob بيحتفظ افتراضياً بعدد محدود من سجلات المهام القديمة (successful/failed jobs)، تقدر تتحكم فيه بـ <code class="inline">successfulJobsHistoryLimit</code> و<code class="inline">failedJobsHistoryLimit</code> عشان متمتلئش الـ Cluster بسجلات قديمة.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق الجوهري بين Job وDeployment؟", a:"Deployment مصمم لتطبيقات دايمة الشغل، لو الـ Pod مات بيرجع فوراً. Job مصمم لمهمة تنفذ مرة وتنتهي بنجاح، مش المفروض تفضل شغالة للأبد."},
+    {q:"إيه وظيفة backoffLimit في Job؟", a:"يحدد أقصى عدد محاولات إعادة تنفيذ لو المهمة فشلت، قبل ما Kubernetes يعتبرها فشلت نهائياً ويوقف المحاولة."},
+    {q:"إيه الفرق بين Job وCronJob؟", a:"Job بينفذ مرة واحدة. CronJob بينفذ نفس المهمة بشكل متكرر على جدول زمني محدد (باستخدام صيغة cron التقليدية)."},
+    {q:"إيه معنى صيغة الجدول «0 2 * * *» في CronJob؟", a:"تنفيذ المهمة كل يوم الساعة 2 صباحاً."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch4", num:"04", title:"Resources & HPA: التحكم في الموارد والتوسع التلقائي", navTitle:"Resources & HPA",
+  lede:"زكا: لو الحمل على تطبيقي زاد فجأة، محتاج أزود عدد الـ Pods يدوياً كل مرة؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> لأ، ده بالظبط اللي <b>Horizontal Pod Autoscaler (HPA)</b> بيحله — بيزود أو يقلل عدد الـ Pods تلقائياً حسب الحمل الفعلي. لكن قبل ما نتكلم عنه، لازم نفهم حاجة أساسية الأول: Resource Requests وLimits.</p>
+  </div>
+
+  <h3>Requests & Limits — أساس أي autoscaling</h3>
+  <p>عشان Kubernetes يعرف يقرر صح، لازم يعرف كل Pod محتاج قد إيه من CPU وRAM.</p>
+  <table>
+    <tr><th>الحقل</th><th>المعنى</th></tr>
+    <tr><td><b>requests</b></td><td>الحد الأدنى المضمون للـ Pod — الـ Scheduler بيستخدمه يقرر أنهي Node يصلح</td></tr>
+    <tr><td><b>limits</b></td><td>الحد الأقصى المسموح — لو الـ Pod حاول يستخدم أكتر، بيتقيّد أو يتقفل (OOMKilled للـ RAM)</td></tr>
+  </table>
+
+  <pre><code>spec:
+  containers:
+    - name: my-app
+      image: my-app:latest
+      resources:
+        requests:
+          cpu: "250m"      <span class="cmt"># 250 milliCPU = ربع core</span>
+          memory: "256Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"</code></pre>
+
+  <div class="warn"><b>تحذير شائع:</b> لو مادّيتش requests/limits خالص، الـ Pod ممكن ياخد موارد الـ Node كله في حالة ضغط، ويأثر على كل الـ Pods التانية عليه. تحديد الموارد ده ممارسة أساسية في أي بيئة إنتاج حقيقية.</div>
+
+  <h3>Horizontal Pod Autoscaler (HPA)</h3>
+  <p>بيراقب metric معين (غالباً استخدام CPU) ويزود/يقلل عدد الـ replicas تلقائياً حسب حد معين إنت بتحدده.</p>
+  <pre><code>apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-app-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70</code></pre>
+
+  <p>يعني: "حافظ على استخدام CPU حوالين 70% في المتوسط، زود الـ replicas لو الحمل زاد، لكن متعديش 10 replicas، ولا تقل عن 2 حتى لو الحمل قليل جداً."</p>
+
+  <div class="diagram">
+الحمل يزيد على الـ Pods
+       │
+       ▼
+metrics-server بيقيس استخدام CPU الفعلي
+       │
+       ▼
+HPA يقارن مع الهدف (70%)
+       │
+       ▼
+لو أعلى من الهدف: يزود replicas (لغاية maxReplicas)
+لو أقل من الهدف: يقلل replicas (لحد minReplicas)
+  </div>
+
+  <div class="note"><b>محتاج metrics-server:</b> HPA مش بيشتغل من غير مكوّن اسمه <code class="inline">metrics-server</code> مثبت في الـ Cluster، وهو المسؤول عن جمع بيانات استخدام CPU/Memory الفعلية من كل الـ Pods.</div>
+
+  <div class="extra"><b>معلومة إضافية:</b> فيه كمان <b>Vertical Pod Autoscaler (VPA)</b> بيعدّل قيم requests/limits نفسها تلقائياً بدل عدد الـ Pods، و<b>Cluster Autoscaler</b> بيزود/يقلل عدد الـ Nodes نفسها في الـ Cluster حسب الحاجة.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق بين requests وlimits في resources؟", a:"requests هو الحد الأدنى المضمون للـ Pod، والـ Scheduler بيستخدمه يقرر مكان تشغيله. limits هو الحد الأقصى المسموح، ولو الـ Pod حاول يتخطاه بيتقيّد أو يتقفل."},
+    {q:"إيه وظيفة HPA؟", a:"Horizontal Pod Autoscaler بيزود أو يقلل عدد الـ Pods (replicas) تلقائياً حسب حمل فعلي (زي استخدام CPU)، بناءً على حدود دنيا وقصوى إنت بتحددها."},
+    {q:"إيه المكوّن الأساسي المطلوب عشان HPA يشتغل خالص؟", a:"metrics-server — المسؤول عن جمع بيانات استخدام الموارد الفعلية من كل الـ Pods، من غيره HPA مالوش بيانات يعتمد عليها."},
+    {q:"إيه الفرق بين HPA وVPA؟", a:"HPA بيغير عدد الـ Pods (Horizontal scaling). VPA بيغير قيم requests/limits نفسها للـ Pod الواحد (Vertical scaling)."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch5", num:"05", title:"NetworkPolicy: التحكم في مين يكلم مين", navTitle:"NetworkPolicy",
+  lede:"زكا: أي Pod في الـ Cluster بيقدر يكلم أي Pod تاني افتراضياً؟ ده مش خطر أمنياً؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> فعلاً، بشكل افتراضي كل الـ Pods بتقدر تتواصل مع بعض من غير قيود (زي شبكة مفتوحة بالكامل). <b>NetworkPolicy</b> بيدّيك تحكم دقيق: مين مسموحله يكلم مين، وعلى أنهي port.</p>
+  </div>
+
+  <h3>ليه NetworkPolicy مهم أمنياً؟</h3>
+  <p>تخيل عندك تطبيق frontend، backend، وقاعدة بيانات. من غير NetworkPolicy، لو حد اخترق الـ frontend، يقدر يوصل مباشرة لقاعدة البيانات من غير أي عائق. مع NetworkPolicy، تقدر تفرض: "قاعدة البيانات تقبل اتصالات من backend بس، مش من أي حاجة تانية".</p>
+
+  <h3>مثال: السماح لـ backend بس بالوصول لقاعدة البيانات</h3>
+  <pre><code>apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-allow-backend-only
+spec:
+  podSelector:
+    matchLabels:
+      app: database
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: backend
+      ports:
+        - protocol: TCP
+          port: 5432</code></pre>
+
+  <table>
+    <tr><th>الحقل</th><th>المعنى</th></tr>
+    <tr><td><code class="inline">podSelector</code></td><td>القاعدة دي بتطبق على أي Pod عنده label: app=database</td></tr>
+    <tr><td><code class="inline">policyTypes: Ingress</code></td><td>القاعدة دي بتتحكم في البيانات الداخلة للـ Pod (مش الخارجة)</td></tr>
+    <tr><td><code class="inline">ingress.from</code></td><td>مسموح بس بالاتصالات الجاية من Pods عندها label: app=backend</td></tr>
+  </table>
+
+  <div class="warn"><b>مهم جداً تفهمه:</b> لو عملت NetworkPolicy واحدة بس بـ Ingress rule، أي Pod يطابق الـ podSelector هيتقفل تماماً قدام أي اتصال تاني غير المحدد صراحة في القاعدة. يعني NetworkPolicy بتشتغل بمبدأ "Default Deny" بمجرد ما تطبقها على Pod معين.</div>
+
+  <h3>Ingress مقابل Egress</h3>
+  <table>
+    <tr><th>النوع</th><th>بيتحكم في</th></tr>
+    <tr><td><b>Ingress</b></td><td>البيانات الداخلة للـ Pod (مين يقدر يكلمه)</td></tr>
+    <tr><td><b>Egress</b></td><td>البيانات الخارجة من الـ Pod (هو نفسه مسموحله يكلم مين)</td></tr>
+  </table>
+
+  <h3>مثال: منع أي اتصال خارجي من Pod معين إلا لـ DNS</h3>
+  <pre><code>apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: restrict-egress
+spec:
+  podSelector:
+    matchLabels:
+      app: sensitive-app
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53   <span class="cmt"># DNS بس</span></code></pre>
+
+  <div class="extra"><b>معلومة إضافية:</b> NetworkPolicy محتاج CNI plugin يدعمها فعلياً (زي Calico أو Cilium). بعض الـ CNI plugins البسيطة (زي flannel الأساسي) مابتدعمش NetworkPolicy خالص، فلازم تتأكد من نوع الـ CNI بتاع الـ Cluster قبل ما تعتمد عليها.</div>
+  `,
+  qa:[
+    {q:"بشكل افتراضي، هل الـ Pods في Kubernetes بتقدر تتواصل مع بعض من غير قيود؟", a:"أيوه، بشكل افتراضي كل الـ Pods بتقدر تتواصل مع بعض من غير أي قيود، زي شبكة مفتوحة بالكامل، إلا لو طبقت NetworkPolicy."},
+    {q:"إيه الفرق بين Ingress وEgress في NetworkPolicy؟", a:"Ingress بيتحكم في البيانات الداخلة للـ Pod (مين مسموحله يكلمه). Egress بيتحكم في البيانات الخارجة من الـ Pod (هو نفسه مسموحله يكلم مين)."},
+    {q:"لو طبقت NetworkPolicy بقاعدة Ingress واحدة على Pod معين، إيه اللي بيحصل لأي اتصال تاني مش محدد في القاعدة؟", a:"بيتم رفضه تلقائياً — NetworkPolicy بتشتغل بمبدأ Default Deny بمجرد ما تنطبق على Pod معين، فأي اتصال مش مسموح صراحة بيتقفل."},
+    {q:"إيه المطلوب عشان NetworkPolicy تشتغل فعلياً في الـ Cluster؟", a:"لازم يكون الـ CNI plugin المستخدم في الـ Cluster بيدعم NetworkPolicy فعلياً (زي Calico أو Cilium)، لإن بعض الـ plugins البسيطة مش بتدعمها خالص."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch6", num:"06", title:"Node Affinity وTaints/Tolerations: التحكم في مكان التشغيل", navTitle:"Affinity & Taints",
+  lede:"زكا: عايز Pods معينة تشتغل بس على Nodes عندها GPU، وPods تانية تتجنب Nodes محجوزة لفريق تاني. إزاي أتحكم في ده؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> فيه أداتين مكملين لبعض هنا: <b>Node Affinity</b> بتقول للـ Pod "فضّل الأماكن دي"، و<b>Taints/Tolerations</b> بيقول للـ Node "امنع أي حد يقرب مني إلا اللي عنده إذن خاص".</p>
+  </div>
+
+  <h3>nodeSelector — أبسط طريقة (تمهيدية)</h3>
+  <pre><code>spec:
+  nodeSelector:
+    disktype: ssd</code></pre>
+  <p>بسيط جداً: الـ Pod هيتشغل بس على Node عنده label <code class="inline">disktype: ssd</code>. لكنه محدود ومايدعمش قواعد معقدة.</p>
+
+  <h3>Node Affinity — نسخة أقوى وأمرن</h3>
+  <pre><code>spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: gpu
+                operator: In
+                values:
+                  - "true"</code></pre>
+  <table>
+    <tr><th>النوع</th><th>المعنى</th></tr>
+    <tr><td><b>required...</b></td><td>شرط إجباري — لو مفيش Node مطابق، الـ Pod مش هيتشغل خالص</td></tr>
+    <tr><td><b>preferred...</b></td><td>شرط تفضيلي — Kubernetes هيحاول يحققه، لكن لو مستحيل، هيشغل الـ Pod في مكان تاني</td></tr>
+  </table>
+
+  <h3>Taints & Tolerations — العكس تماماً</h3>
+  <p>بينما Affinity بتحدد تفضيل من ناحية الـ Pod، الـ Taint بيحط "علامة تحذير" على الـ Node نفسه بتمنع أي Pod من الاستقرار عليه، إلا لو الـ Pod عنده Toleration صريح بيسمحله يتجاوز التحذير ده.</p>
+
+  <pre><code><span class="cmt"># على الـ Node، تحط Taint</span>
+kubectl taint nodes node1 team=data-science:NoSchedule</code></pre>
+
+  <p>وبعدين الـ Pod الوحيد اللي يقدر يتشغل على الـ Node ده محتاج Toleration:</p>
+  <pre><code>spec:
+  tolerations:
+    - key: "team"
+      operator: "Equal"
+      value: "data-science"
+      effect: "NoSchedule"</code></pre>
+
+  <h3>أنواع الـ Effect في Taints</h3>
+  <table>
+    <tr><th>Effect</th><th>المعنى</th></tr>
+    <tr><td><b>NoSchedule</b></td><td>ما تجدولش أي Pod جديد هنا، إلا لو عنده Toleration</td></tr>
+    <tr><td><b>PreferNoSchedule</b></td><td>حاول تتجنب، لكن مش شرط إجباري</td></tr>
+    <tr><td><b>NoExecute</b></td><td>أقوى نوع — حتى الـ Pods الشغالة بالفعل هتتطرد لو معندهاش Toleration</td></tr>
+  </table>
+
+  <div class="note"><b>الفرق الأساسي اللي تحفظه:</b> Affinity = اختيار من ناحية الـ Pod ("أنا عايز أروح هنا"). Taint/Toleration = حماية من ناحية الـ Node ("محدش يقرب إلا اللي عنده إذن"). غالباً بتتستخدم مع بعض للتحكم الدقيق الكامل.</div>
+
+  <div class="extra"><b>معلومة إضافية:</b> Control Plane Nodes نفسها بيتحط عليها Taint افتراضي (<code class="inline">node-role.kubernetes.io/control-plane:NoSchedule</code>) عشان تطبيقات المستخدم العادية متتشغلش عليها بالغلط، وتفضل مخصصة للتحكم الإداري بس.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق بين nodeSelector وNode Affinity؟", a:"nodeSelector بسيط ومحدود، بيطلب مطابقة label واحدة بشكل صريح. Node Affinity أقوى وأمرن، بيدعم شروط معقدة (In, NotIn...) وقواعد إجبارية أو تفضيلية."},
+    {q:"إيه الفرق بين requiredDuringSchedulingIgnoredDuringExecution وpreferredDuringSchedulingIgnoredDuringExecution؟", a:"required هو شرط إجباري — لو مفيش Node مطابق، الـ Pod مش هيتشغل خالص. preferred هو شرط تفضيلي، Kubernetes هيحاول يحققه لكن مش هيمنع تشغيل الـ Pod لو مستحيل."},
+    {q:"إيه الفرق الجوهري بين Affinity وTaint/Toleration؟", a:"Affinity هو اختيار من ناحية الـ Pod نفسه (تفضيلات). Taint/Toleration هو حماية من ناحية الـ Node (منع افتراضي، إلا لو الـ Pod عنده إذن صريح)."},
+    {q:"إيه أقوى Effect في الـ Taints، واللي بيطرد حتى الـ Pods الشغالة بالفعل؟", a:"NoExecute."},
+    {q:"ليه Control Plane Nodes عندها Taint افتراضي؟", a:"عشان تطبيقات المستخدم العادية متتشغلش عليها بالغلط، وتفضل مخصصة بس للتحكم الإداري في الـ Cluster."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch7", num:"07", title:"CRDs & Operators: توسيع Kubernetes نفسه", navTitle:"CRDs & Operators",
+  lede:"زكا: كل اللي اتعلمناه من Pod لحد StatefulSet هو موارد Kubernetes الجاهزة. هل ينفع أعمل نوع مورد جديد بنفسي؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> أيوه فعلاً، وده أقوى حاجة في Kubernetes بصراحة. <b>Custom Resource Definition (CRD)</b> بيخليك تعرّف نوع مورد جديد بالكامل (زي ما لو عملت kind خاص بيك)، و<b>Operator</b> هو البرنامج اللي بيدير المورد ده بنفس منطق الـ Reconciliation Loop اللي اتعلمناه من الأول.</p>
+  </div>
+
+  <h3>CRD — تعريف نوع مورد جديد</h3>
+  <p>تخيل عايز تعمل مورد اسمه <code class="inline">Database</code> بيوصف قاعدة بيانات كاملة بإعدادتها، بدل ما تكتب StatefulSet وService وConfigMap يدوياً كل مرة. الـ CRD بيسمحلك تعرّف ده:</p>
+  <pre><code>apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: databases.mycompany.com
+spec:
+  group: mycompany.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+  scope: Namespaced
+  names:
+    plural: databases
+    singular: database
+    kind: Database</code></pre>
+
+  <p>بعد تسجيل الـ CRD ده، تقدر تستخدمه زي أي مورد Kubernetes عادي:</p>
+  <pre><code>apiVersion: mycompany.com/v1
+kind: Database
+metadata:
+  name: my-production-db
+spec:
+  engine: postgres
+  version: "16"
+  storageSize: 50Gi
+  replicas: 3</code></pre>
+
+  <div class="warn"><b>مهم تفهمه:</b> الـ CRD لوحده بيسجل "الشكل" بس (زي عمل جدول فاضي في قاعدة بيانات). لوحده مالوش أي سلوك فعلي — لازم يكون فيه Operator شغال يراقب الموارد دي ويتصرف بناءً عليها.</div>
+
+  <h3>Operator — العقل اللي بيدير المورد الجديد</h3>
+  <p>برنامج (عادةً هو نفسه Pod شغال في الـ Cluster) بيراقب الموارد من نوع CRD معين، وبيطبق منطق Reconciliation Loop مخصص. مثال: لو حد عمل <code class="inline">Database</code> resource بـ <code class="inline">replicas: 3</code>، الـ Operator هو اللي فعلياً بيعمل StatefulSet وService وSecret المطلوبين، ويراقبهم باستمرار.</p>
+
+  <div class="diagram">
+المستخدم يعمل:  Database (CRD) resource
+                     │
+                     ▼
+        Operator بيلاحظ المورد الجديد
+                     │
+                     ▼
+    بيعمل تلقائياً: StatefulSet + Service + Secret + ConfigMap
+                     │
+                     ▼
+    بيراقب باستمرار (backup تلقائي، failover، upgrades...)
+  </div>
+
+  <h3>أمثلة Operators شهيرة جاهزة</h3>
+  <table>
+    <tr><th>Operator</th><th>بيدير إيه</th></tr>
+    <tr><td>Prometheus Operator</td><td>نشر وإدارة Prometheus وAlertmanager بالكامل</td></tr>
+    <tr><td>Postgres Operator (Zalando/CrunchyData)</td><td>قواعد بيانات PostgreSQL موزعة مع backup تلقائي</td></tr>
+    <tr><td>Cert-Manager</td><td>إصدار وتجديد شهادات TLS تلقائياً</td></tr>
+    <tr><td>ArgoCD Operator</td><td>إدارة نشر ArgoCD نفسه (هنتكلم عنه في فصل GitOps)</td></tr>
+  </table>
+
+  <div class="extra"><b>معلومة إضافية:</b> بناء Operator بنفسك عادة بيتم بأدوات زي <code class="inline">Kubebuilder</code> أو <code class="inline">Operator SDK</code>، وده مجال متخصص بيحتاج خبرة في Go عادةً، لإن معظم الـ Operators بتتكتب بلغة Go باستخدام مكتبة client-go الرسمية.</div>
+  `,
+  qa:[
+    {q:"إيه هو CRD ببساطة؟", a:"Custom Resource Definition — يسمح لك تعرّف نوع مورد جديد بالكامل جوه Kubernetes، زي ما تعمل kind خاص بيك بحقول مخصصة."},
+    {q:"هل CRD لوحده كافي عشان المورد الجديد يعمل حاجة فعلية؟", a:"لأ، CRD بيسجل الشكل بس (زي عمل جدول فاضي). لازم يكون فيه Operator شغال يراقب الموارد من النوع ده ويتصرف بناءً عليها فعلياً."},
+    {q:"إيه وظيفة الـ Operator؟", a:"برنامج بيراقب موارد من نوع CRD معين، وبيطبق منطق Reconciliation Loop مخصص عليها — يعني يتصرف تلقائياً بناءً على الحالة المطلوبة اللي المستخدم حددها في المورد."},
+    {q:"اذكر مثال على Operator شهير جاهز وإيه اللي بيديره", a:"Cert-Manager — بيدير إصدار وتجديد شهادات TLS تلقائياً. أو Prometheus Operator اللي بيدير نشر Prometheus وAlertmanager بالكامل."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch8", num:"08", title:"Monitoring: Prometheus وGrafana", navTitle:"Monitoring",
+  lede:"زكا: إزاي أعرف إن تطبيقي شغال كويس فعلاً، أو إن فيه مشكلة قبل ما المستخدمين يشتكوا؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> عن طريق <b>Monitoring</b> حقيقي، مش بس kubectl get pods كل شوية. المعيار الأشهر في عالم Kubernetes هو ثنائي <b>Prometheus</b> (لجمع وتخزين البيانات) و<b>Grafana</b> (لعرضها بصرياً).</p>
+  </div>
+
+  <h3>Prometheus — إزاي بيجمع البيانات</h3>
+  <p>بعكس أنظمة تقليدية بتستقبل بيانات (push)، Prometheus بيشتغل بنموذج <b>Pull</b> — هو نفسه بيروح لكل تطبيق كل فترة زمنية معينة (scrape interval) ويسأله "إيه حالتك دلوقتي؟" عن طريق endpoint خاص بيرجع metrics.</p>
+
+  <div class="diagram">
+Prometheus Server
+       │
+       │  كل 15 ثانية مثلاً، يروح يسأل كل target
+       ▼
+┌──────────┬──────────┬──────────┐
+│  App 1    │  App 2    │  Node    │
+│ /metrics  │ /metrics  │ Exporter │
+└──────────┴──────────┴──────────┘
+</div>
+
+  <h3>مثال endpoint بيرجعه تطبيق لـ Prometheus</h3>
+  <pre><code># HELP http_requests_total إجمالي الطلبات المستقبلة
+# TYPE http_requests_total counter
+http_requests_total{method="GET",status="200"} 15420
+http_requests_total{method="POST",status="500"} 12
+
+# HELP memory_usage_bytes استخدام الذاكرة الحالي
+# TYPE memory_usage_bytes gauge
+memory_usage_bytes 256000000</code></pre>
+
+  <h3>PromQL — لغة الاستعلام</h3>
+  <p>بتستخدمها تسأل Prometheus أسئلة عن البيانات المجمعة:</p>
+  <pre><code><span class="cmt"># معدل الطلبات في آخر 5 دقايق</span>
+rate(http_requests_total[5m])
+
+<span class="cmt"># متوسط استخدام CPU لكل Pod في namespace معين</span>
+avg(rate(container_cpu_usage_seconds_total{namespace="production"}[5m])) by (pod)</code></pre>
+
+  <h3>Grafana — العرض البصري</h3>
+  <p>بيتصل بـ Prometheus كمصدر بيانات (data source)، وبيديك Dashboards تفاعلية — رسوم بيانية، تنبيهات (alerts)، ولوحات متابعة مباشرة تقدر تشاركها مع الفريق.</p>
+
+  <div class="note"><b>نصيحة عملية:</b> معظم فرق DevOps مش بتبني Dashboards من الصفر — فيه مجتمع ضخم من الـ Dashboards الجاهزة (زي Dashboard ID 315 لمراقبة Kubernetes nodes بشكل عام) تقدر تستوردها مباشرة في Grafana.</div>
+
+  <h3>Alertmanager — التنبيهات</h3>
+  <p>مكوّن مكمّل لـ Prometheus، بيستقبل تنبيهات (Alerts) بناءً على قواعد إنت بتحددها (زي "لو CPU فوق 90% لمدة 5 دقايق")، وبيبعتها لقنوات مختلفة (Slack, Email, PagerDuty).</p>
+
+  <div class="extra"><b>معلومة إضافية:</b> غالباً بيتم تثبيت كل الحزمة دي مع بعض (Prometheus + Grafana + Alertmanager) عن طريق Prometheus Operator، اللي اتكلمنا عنه في فصل CRDs & Operators — بيبسّط عملية التثبيت والتحديث جداً.</div>
+  `,
+  qa:[
+    {q:"إيه نموذج جمع البيانات اللي Prometheus بيستخدمه (Push ولا Pull)؟", a:"Pull — Prometheus نفسه بيروح لكل تطبيق (target) كل فترة زمنية محددة ويجمع الـ metrics منه، عكس الأنظمة اللي التطبيقات بتبعتلها بياناتها بنفسها."},
+    {q:"إيه دور Grafana مقابل Prometheus؟", a:"Prometheus مسؤول عن جمع وتخزين البيانات (metrics). Grafana مسؤول عن عرض البيانات دي بصرياً في Dashboards تفاعلية، وبيتصل بـ Prometheus كمصدر بيانات."},
+    {q:"إيه هي PromQL؟", a:"لغة الاستعلام الخاصة بـ Prometheus، بتستخدمها تسأل أسئلة عن البيانات المجمعة، زي معدل الطلبات أو متوسط استخدام CPU."},
+    {q:"إيه وظيفة Alertmanager؟", a:"مكوّن مكمّل لـ Prometheus، بيستقبل تنبيهات بناءً على قواعد محددة (زي تجاوز حد معين من CPU)، وبيبعتها لقنوات تنبيه مختلفة زي Slack أو Email."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch9", num:"09", title:"GitOps وArgoCD: النشر بدون لمس kubectl", navTitle:"GitOps & ArgoCD",
+  lede:"زكا: كل مرة أعمل تعديل، بضطر أعمل kubectl apply يدوي. فيه طريقة أفضل وأأمن؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> أيوه، اسمها <b>GitOps</b>. الفكرة الأساسية: <b>Git repository</b> هو "مصدر الحقيقة الوحيد" (Single Source of Truth) لحالة الـ Cluster المطلوبة، وأداة زي <b>ArgoCD</b> بتراقب الـ repo ده وتطبّق أي تغيير تلقائياً على الـ Cluster.</p>
+  </div>
+
+  <h3>الفرق بين الطريقة التقليدية وGitOps</h3>
+  <table>
+    <tr><th></th><th>الطريقة التقليدية</th><th>GitOps</th></tr>
+    <tr><td>التطبيق</td><td>مهندس يشغّل kubectl apply يدوياً</td><td>Git commit بس، الأداة بتطبق تلقائياً</td></tr>
+    <tr><td>سجل التغييرات</td><td>مبعثر (terminal history، لو موجود أصلاً)</td><td>كامل في Git log</td></tr>
+    <tr><td>Rollback</td><td>يدوي ومعقد</td><td>git revert بسيط</td></tr>
+    <tr><td>من يقدر يعدل؟</td><td>أي حد عنده kubectl access</td><td>بس عن طريق Pull Request معتمد</td></tr>
+  </table>
+
+  <h3>إزاي ArgoCD بيشتغل</h3>
+  <div class="diagram">
+Git Repository (مصدر الحقيقة)
+       │  ArgoCD بيراقب باستمرار
+       ▼
+ArgoCD يقارن: الحالة في Git  مقابل  الحالة الفعلية في الـ Cluster
+       │
+       ▼
+لو فيه فرق (Git اتغير، أو حد عدل يدوي في الـ Cluster نفسه)
+       │
+       ▼
+ArgoCD يصلّح الفرق تلقائياً (Sync) عشان الـ Cluster يطابق Git بالظبط
+  </div>
+
+  <div class="note"><b>لاحظ الشبه بمنطق سبق شرحه:</b> ده تطبيق مباشر لنفس فكرة Reconciliation Loop اللي اتعلمناها من أول الكورس — بس هنا "Desired State" مصدره Git بدل ما يكون بس داخل etcd، و"Actual State" هو حالة الـ Cluster الفعلية.</div>
+
+  <h3>مثال بسيط لتعريف Application في ArgoCD</h3>
+  <pre><code>apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: my-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/myteam/my-app-configs.git
+    targetRevision: main
+    path: k8s-manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+  syncPolicy:
+    automated:
+      prune: true       <span class="cmt"># امسح أي مورد اتشال من Git تلقائياً</span>
+      selfHeal: true     <span class="cmt"># لو حد عدل يدوي في الـ Cluster، ارجعه لحالة Git</span></code></pre>
+
+  <h3>فوائد GitOps الأساسية</h3>
+  <ul>
+    <li><b>Audit trail كامل</b> — كل تغيير موثق في Git، مين عمله وإمتى وليه.</li>
+    <li><b>Rollback سهل</b> — رجوع لأي نسخة سابقة بـ git revert بسيط.</li>
+    <li><b>أمان أعلى</b> — مفيش حد محتاج kubectl access مباشر على بيئة الإنتاج، كل حاجة بتمر عبر Pull Request.</li>
+    <li><b>Self-healing على مستوى الإعدادات</b> — لو حد عدل حاجة يدوي في الـ Cluster (drift)، ArgoCD بيرجعها لحالة Git تلقائياً.</li>
+  </ul>
+
+  <div class="extra"><b>معلومة إضافية:</b> فيه أداة تانية شهيرة بنفس الفلسفة اسمها FluxCD، وكلاهما (ArgoCD وFluxCD) من مشاريع CNCF الرسمية المستخدمة على نطاق واسع في بيئات الإنتاج الحقيقية.</div>
+  `,
+  qa:[
+    {q:"إيه الفكرة الأساسية وراء GitOps؟", a:"إن Git repository يكون مصدر الحقيقة الوحيد (Single Source of Truth) لحالة الـ Cluster المطلوبة، وأداة زي ArgoCD بتراقب الـ repo وتطبق أي تغيير تلقائياً."},
+    {q:"إزاي GitOps بيربط بمفهوم Reconciliation Loop اللي اتعلمناه من الأول؟", a:"نفس المنطق بالظبط — ArgoCD بيقارن باستمرار بين Desired State (المكتوب في Git) وActual State (حالة الـ Cluster الفعلية)، ويصلّح أي فرق تلقائياً."},
+    {q:"إيه معنى selfHeal: true في syncPolicy بتاع ArgoCD؟", a:"لو حد عدل حاجة يدوياً في الـ Cluster مباشرة (drift عن حالة Git)، ArgoCD هيرجعها تلقائياً لتطابق الحالة المكتوبة في Git."},
+    {q:"اذكر فايدتين أساسيتين لاستخدام GitOps بدل kubectl apply اليدوي", a:"Audit trail كامل لكل تغيير موثق في Git، وسهولة الـ Rollback عن طريق git revert بسيط بدل عملية يدوية معقدة."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch10", num:"10", title:"Security المتقدم: حماية بيئة الإنتاج", navTitle:"Advanced Security",
+  lede:"كريم: كل اللي اتعلمناه (RBAC, NetworkPolicy) أساسي، لكن فيه طبقات حماية إضافية لازم تعرفها لبيئة إنتاج حقيقية.",
+  body:`
+  <h3>Pod Security Standards — تقييد صلاحيات الـ Pod نفسه</h3>
+  <p>بتحدد إيه المسموح للـ Pod يعمله على مستوى النظام (زي: هل يقدر يشتغل كـ root، هل يقدر يوصل لملفات الـ Host نفسه).</p>
+  <table>
+    <tr><th>المستوى</th><th>الوصف</th></tr>
+    <tr><td><b>Privileged</b></td><td>مفتوح بالكامل، بدون قيود (خطر، للاستخدامات الخاصة جداً بس)</td></tr>
+    <tr><td><b>Baseline</b></td><td>يمنع أخطر الصلاحيات المعروفة، لكن مرن نسبياً</td></tr>
+    <tr><td><b>Restricted</b></td><td>أشد مستوى — يفرض أفضل الممارسات الأمنية بالكامل</td></tr>
+  </table>
+
+  <pre><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: secure-app
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+  containers:
+    - name: app
+      image: my-app:latest
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true</code></pre>
+
+  <h3>Secrets Management خارجي — أبعد من Kubernetes Secret العادي</h3>
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> فاكر Secret اللي اتعلمناه، ليه مش كافي لوحده في بيئة إنتاج حقيقية؟</p>
+    <p><b class="who k">كريم:</b> Secret العادي بيتخزن في etcd، وبـ Base64 بس (مش تشفير حقيقي فاكر؟). في بيئات حساسة، بيتم دمجه مع أدوات إدارة أسرار خارجية زي <b>HashiCorp Vault</b>، اللي بيوفر تشفير حقيقي، دوران تلقائي للمفاتيح (rotation)، وتحكم دقيق جداً في مين يوصل لأنهي سر.</p>
+  </div>
+
+  <h3>Image Security — تأمين الـ image نفسه</h3>
+  <ul>
+    <li><b>Image Scanning</b> — أدوات زي Trivy أو Clair بتفحص الـ image بحثاً عن ثغرات معروفة (CVEs) قبل النشر.</li>
+    <li><b>Image Signing</b> — التوقيع الرقمي على الـ images (زي Cosign) للتأكد إن الـ image اللي بتشغّله فعلاً هو اللي بنيته إنت، مش نسخة معدّلة من حد آخر.</li>
+    <li><b>Private Registry</b> — تجنب سحب images من مصادر عامة غير موثوقة في بيئة إنتاج حساسة.</li>
+  </ul>
+
+  <h3>Admission Controllers — البوابة الأخيرة قبل القبول</h3>
+  <p>فاكر رحلة الطلب لـ kube-apiserver (Authentication → Authorization)؟ فيه مرحلة إضافية بعدهم اسمها <b>Admission Control</b> — بتفحص وممكن تعدّل أو ترفض الطلب حتى لو كان مسموح بيه من ناحية RBAC.</p>
+  <div class="diagram">
+الطلب يوصل لـ kube-apiserver
+       │
+       ▼
+Authentication (مين إنت؟)
+       │
+       ▼
+Authorization / RBAC (مسموحلك تعمل ده؟)
+       │
+       ▼
+Admission Control (حتى لو مسموح، هل ده متوافق مع سياسات إضافية؟)
+       │
+       ▼
+يتسجل في etcd
+  </div>
+
+  <p>مثال: Admission Controller ممكن يرفض أي Pod ملوش resource limits محددة، حتى لو المستخدم عنده RBAC صلاحية كاملة لعمل Pods.</p>
+
+  <div class="extra"><b>معلومة إضافية:</b> أدوات زي OPA (Open Policy Agent) وGatekeeper بتستخدم كـ Admission Controllers مخصصة، بتسمحلك تكتب سياسات معقدة (زي "كل Pod لازم يكون عليه label معين" أو "ممنوع images من registries غير موثوقة") وتفرضها تلقائياً على كل الـ Cluster.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق بين مستويات Pod Security Standards التلاتة؟", a:"Privileged مفتوح بالكامل بدون قيود. Baseline يمنع أخطر الصلاحيات المعروفة بمرونة نسبية. Restricted أشد مستوى ويفرض أفضل الممارسات الأمنية بالكامل."},
+    {q:"ليه Kubernetes Secret العادي مش كافي في بيئة إنتاج حساسة جداً؟", a:"لإنه بيتخزن بـ Base64 بس (ترميز مش تشفير حقيقي) في etcd. في البيئات الحساسة، بيتم دمجه مع أدوات خارجية زي HashiCorp Vault اللي بتوفر تشفير حقيقي ودوران تلقائي للمفاتيح."},
+    {q:"إيه هي مرحلة Admission Control ومكانها في رحلة الطلب؟", a:"مرحلة بعد Authentication وAuthorization جوه kube-apiserver، بتفحص وممكن تعدّل أو ترفض الطلب بناءً على سياسات إضافية، حتى لو كان مسموح بيه أصلاً من ناحية RBAC."},
+    {q:"اذكر مثال على أداة بتستخدم كـ Admission Controller مخصص لفرض سياسات معقدة", a:"OPA (Open Policy Agent) مع Gatekeeper — بتسمح بكتابة سياسات مخصصة وفرضها تلقائياً على كل موارد الـ Cluster."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch11", num:"11", title:"الخلاصة الشاملة: صورة Production كاملة", navTitle:"الخلاصة",
+  lede:"كريم: خلاص يا زكا، دلوقتي عندك الصورة الكاملة تقريباً. خلينا نجمعها كلها في نظرة واحدة.",
+  body:`
+  <h3>خريطة القرار: أنهي Workload أستخدم إمتى؟</h3>
+  <table>
+    <tr><th>لو التطبيق...</th><th>استخدم</th></tr>
+    <tr><td>Stateless، عدد نسخ ثابت، محتاج rolling updates</td><td>Deployment</td></tr>
+    <tr><td>لازم يشتغل على كل Node (monitoring, logging agents)</td><td>DaemonSet</td></tr>
+    <tr><td>Stateful، محتاج هوية وstorage ثابت (databases)</td><td>StatefulSet</td></tr>
+    <tr><td>مهمة تنتهي مرة واحدة (migration, batch processing)</td><td>Job</td></tr>
+    <tr><td>مهمة متكررة على جدول زمني (backups, reports)</td><td>CronJob</td></tr>
+  </table>
+
+  <h3>طبقات الحماية الكاملة (من الداخل للخارج)</h3>
+  <div class="diagram">
+1. RBAC              → مين مسموحله يعمل إيه على الـ API
+2. Admission Control  → سياسات إضافية حتى لو RBAC سمح
+3. NetworkPolicy      → مين مسموحله يكلم مين على مستوى الشبكة
+4. Pod Security       → إيه المسموح للـ Pod نفسه يعمله (root, filesystem...)
+5. Secrets Management → حماية البيانات الحساسة (Vault بدل Secret العادي)
+6. Image Security     → التأكد إن الـ image نفسه آمن وموقّع
+  </div>
+
+  <h3>دورة حياة تطبيق Production كاملة</h3>
+  <div class="diagram">
+1. مطور يعمل commit لكود جديد
+       │
+2. CI pipeline يبني ويفحص الـ image (scanning + signing)
+       │
+3. المطور يعمل commit لملف YAML جديد في Git repo (GitOps)
+       │
+4. ArgoCD يلاحظ التغيير، يطبقه تلقائياً على الـ Cluster
+       │
+5. Deployment يعمل Rolling Update (فاكر من الأساسيات؟)
+       │
+6. HPA يراقب الحمل، يزود/يقلل Pods حسب الحاجة
+       │
+7. Prometheus يجمع metrics، Grafana يعرضها، Alertmanager ينبّه لو فيه مشكلة
+       │
+8. لو مشكلة حرجة: git revert بسيط، ArgoCD يرجّع النسخة القديمة فوراً
+  </div>
+
+  <h3>ملخص كل المفاهيم اللي اتغطت</h3>
+  <table>
+    <tr><th>الموضوع</th><th>الفكرة في جملة واحدة</th></tr>
+    <tr><td>DaemonSet</td><td>Pod واحد على كل Node تلقائياً</td></tr>
+    <tr><td>StatefulSet</td><td>هوية وstorage ثابت لكل نسخة</td></tr>
+    <tr><td>Job/CronJob</td><td>مهام تنتهي، مرة واحدة أو متكررة</td></tr>
+    <tr><td>Resources & HPA</td><td>تحديد الموارد + توسع تلقائي حسب الحمل</td></tr>
+    <tr><td>NetworkPolicy</td><td>تحكم دقيق في اتصالات الشبكة الداخلية</td></tr>
+    <tr><td>Affinity/Taints</td><td>التحكم في مكان تشغيل الـ Pods</td></tr>
+    <tr><td>CRDs & Operators</td><td>توسيع Kubernetes نفسه بموارد مخصصة</td></tr>
+    <tr><td>Monitoring</td><td>Prometheus لجمع البيانات، Grafana لعرضها</td></tr>
+    <tr><td>GitOps</td><td>Git كمصدر حقيقة وحيد، ArgoCD ينفذ تلقائياً</td></tr>
+    <tr><td>Security متقدم</td><td>طبقات حماية متعددة تتكامل مع بعض</td></tr>
+  </table>
+
+  <h3>🎯 تمرين شامل نهائي (سيناريو حقيقي)</h3>
+  <div class="assign-block">
+    <span class="tag">التمرين النهائي</span>
+    <p>عندك تطبيق e-commerce كامل، صمم البنية المناسبة له:</p>
+    <ol>
+      <li>الـ frontend وbackend: أنهي نوع Workload تستخدم، وليه؟</li>
+      <li>قاعدة البيانات: أنهي نوع Workload، وإزاي تضمن البيانات متضاعش لو Pod اتعمله restart؟</li>
+      <li>مهمة تنظيف يومية للـ logs القديمة الساعة 3 الصبح: أنهي مورد تستخدم؟</li>
+      <li>اكتب NetworkPolicy تمنع أي حاجة غير الـ backend من الوصول لقاعدة البيانات.</li>
+      <li>اكتب HPA يخلي الـ backend يتوسع من 3 لحد 15 نسخة لو استخدام CPU عدى 75%.</li>
+      <li>اقترح خطة Monitoring بسيطة: إيه الـ metrics الأهم اللي تراقبها، وإيه شرط الـ Alert المناسب لكل واحدة؟</li>
+      <li>اشرح إزاي هتستخدم GitOps عشان أي تغيير في الإعدادات يمر بمراجعة (Pull Request) قبل ما يوصل للإنتاج.</li>
+    </ol>
+  </div>
+
+  <h3>إيه اللي فاتنا برضو (المرحلة اللي بعد كده)</h3>
+  <ul>
+    <li><b>Service Mesh</b> (Istio, Linkerd) — تحكم متقدم جداً في الشبكة بين Microservices، بما فيه mTLS تلقائي وtraffic splitting.</li>
+    <li><b>Multi-cluster Management</b> — إدارة عدة Clusters مع بعض (زي Karmada أو Cluster API).</li>
+    <li><b>Cost Optimization</b> — أدوات زي Kubecost لمراقبة وتقليل تكلفة الـ Cluster.</li>
+    <li><b>Chaos Engineering</b> — اختبار مرونة النظام عمداً (زي Chaos Mesh) بمحاكاة أعطال حقيقية.</li>
+    <li><b>Certifications</b> — لو حابب تثبت مهاراتك رسمياً: CKA (Administrator)، CKAD (Application Developer)، CKS (Security Specialist).</li>
+  </ul>
+
+  <div class="extra"><b>كلمة كريم الأخيرة:</b> وصلت لمرحلة كويسة جداً دلوقتي يا زكا — فاهم من أبسط Pod لحد GitOps وOperators. الخطوة الجاية مش إنك تحفظ أكتر، لكن إنك تطبق كل ده على مشروع حقيقي، ولو حصلت مشكلة، ترجع لنفس المبدأ اللي اتعلمناه بدري: Desired State مقابل Actual State، وفكر فين بالظبط الفرق حاصل.</div>
+  `,
+  qa:[
+    {q:"لو عايز تطبيق قاعدة بيانات محتاج storage ثابت وهوية معروفة لكل نسخة، أنهي Workload تستخدم؟", a:"StatefulSet."},
+    {q:"رتب طبقات الحماية من الأقرب للـ API لحد الأقرب للـ image نفسه", a:"RBAC → Admission Control → NetworkPolicy → Pod Security → Secrets Management → Image Security."},
+    {q:"في دورة حياة تطبيق Production الكاملة، إيه دور ArgoCD بالتحديد؟", a:"بيراقب Git repository ويطبق أي تغيير تلقائياً على الـ Cluster، ويضمن إن حالة الـ Cluster دايماً بتطابق الحالة المكتوبة في Git."},
+    {q:"لو عايز تطبيقك يتوسع تلقائياً حسب الحمل، إيه المكوّن المسؤول عن كده؟", a:"Horizontal Pod Autoscaler (HPA)، بشرط وجود metrics-server في الـ Cluster."},
+    {q:"اذكر الشهادات الرسمية الثلاثة المتاحة لإثبات مهارات Kubernetes", a:"CKA (Certified Kubernetes Administrator)، CKAD (Certified Kubernetes Application Developer)، CKS (Certified Kubernetes Security Specialist)."}
+  ]
+});
+
+/* ============ END DATA ============ */
+
+/* ---------- Rendering ---------- */
+const navContainer = document.getElementById('navContainer');
+const chaptersEl = document.getElementById('content').querySelector('#chapters');
+
+function escId(s){ return s.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g,'-'); }
+
+function renderNav(){
+  let html = '<div class="nav-group-label">المحتويات</div>';
+  html += `<a class="nav-link" data-target="intro" href="#intro"><span class="n">00</span><span>البداية</span></a>`;
+  CHAPTERS.forEach(ch=>{
+    html += `<a class="nav-link" data-target="${ch.id}" href="#${ch.id}"><span class="n">${ch.num}</span><span>${ch.navTitle||ch.title}</span></a>`;
+  });
+  navContainer.innerHTML = html;
+}
+
+function renderChapters(){
+  let html = '';
+  CHAPTERS.forEach(ch=>{
+    html += `<section class="chapter" id="${ch.id}">
+      <div class="chapter-head"><span class="chapter-num">${ch.num}</span><h2>${ch.title}</h2></div>
+      ${ch.lede ? `<div class="lede">${ch.lede}</div>` : ''}
+      <div class="chapter-body">${ch.body}</div>`;
+
+    if(ch.qa && ch.qa.length){
+      html += `<div class="qa-title"><h3>🧠 أسئلة وأجوبة</h3><span class="qa-badge">${ch.qa.length} سؤال</span></div>`;
+      ch.qa.forEach(item=>{
+        html += `<details class="qa"><summary>${item.q}</summary><div class="qa-body">${item.a}</div></details>`;
+      });
+    }
+    html += `</section>`;
+  });
+  chaptersEl.innerHTML = html;
+}
+
+renderNav();
+renderChapters();
+
+/* ---------- Copy buttons for code blocks ---------- */
+document.querySelectorAll('pre').forEach(pre=>{
+  const codeEl = pre.querySelector('code');
+  const btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'نسخ';
+  btn.onclick = ()=>{
+    const text = codeEl ? codeEl.innerText : pre.innerText;
+    navigator.clipboard.writeText(text.trim());
+    btn.textContent = 'اتنسخ ✓';
+    setTimeout(()=>btn.textContent='نسخ', 1400);
+  };
+  pre.appendChild(btn);
+});
+
+/* ---------- Scroll spy ---------- */
+const navLinks = [...document.querySelectorAll('.nav-link')];
+const sections = [document.getElementById('intro'), ...CHAPTERS.map(c=>document.getElementById(c.id))];
+const pathCurrent = document.getElementById('pathCurrent');
+const progressLabel = document.getElementById('progressLabel');
+
+function onScroll(){
+  let currentId = 'intro';
+  for(const sec of sections){
+    if(!sec) continue;
+    const rect = sec.getBoundingClientRect();
+    if(rect.top <= 140) currentId = sec.id;
+  }
+  navLinks.forEach(l=>l.classList.toggle('active', l.dataset.target===currentId));
+  pathCurrent.textContent = currentId;
+  const idx = sections.findIndex(s=>s && s.id===currentId);
+  progressLabel.textContent = `${idx+1} / ${sections.length}`;
+}
+document.addEventListener('scroll', onScroll, {passive:true});
+onScroll();
+
+/* ---------- Mobile menu ---------- */
+const sidebar = document.getElementById('sidebar');
+document.getElementById('menuBtn').onclick = ()=> sidebar.classList.toggle('open');
+navLinks.forEach(l=> l.addEventListener('click', ()=> sidebar.classList.remove('open')));
+
+/* ---------- Search ---------- */
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('input', ()=>{
+  const q = searchInput.value.trim();
+  if(!q){
+    navLinks.forEach(l=>l.classList.remove('hidden'));
+    return;
+  }
+  navLinks.forEach(l=>{
+    const target = l.dataset.target;
+    const sec = document.getElementById(target);
+    const text = (sec ? sec.innerText : l.innerText);
+    l.classList.toggle('hidden', !text.includes(q));
+  });
+});
+</script>
+</body>
+</html>

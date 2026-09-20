@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kubernetes: حكاية زكا وكريم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800;900&family=Tajawal:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#11151b;
+    --bg-alt:#161b22;
+    --panel:#1a212b;
+    --panel-2:#1f2731;
+    --border:#2a323d;
+    --amber:#4f9fe8;
+    --amber-dim:#2f628a;
+    --teal:#5cb8a6;
+    --text:#e9e7de;
+    --text-dim:#96a0af;
+    --text-faint:#5c6675;
+    --danger:#d9695f;
+    --radius:10px;
+    --serif-ar:'Cairo',sans-serif;
+    --body-ar:'Tajawal',sans-serif;
+    --mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--body-ar);
+    line-height:1.85;
+    font-size:16.5px;
+  }
+  ::selection{background:var(--amber);color:#141821;}
+
+  /* ---------- Layout ---------- */
+  .app{display:flex; min-height:100vh;}
+  .sidebar{
+    width:300px; flex-shrink:0;
+    background:var(--bg-alt);
+    border-left:1px solid var(--border);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:22px 18px 60px;
+  }
+  .sidebar::-webkit-scrollbar{width:8px;}
+  .sidebar::-webkit-scrollbar-thumb{background:var(--panel-2); border-radius:8px;}
+
+  .brand{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--amber); box-shadow:0 0 10px var(--amber);}
+  .brand-title{font-family:var(--serif-ar); font-weight:900; font-size:1.15rem; color:var(--text);}
+  .brand-sub{font-family:var(--mono); font-size:.72rem; color:var(--text-faint); margin:2px 0 18px; letter-spacing:.3px;}
+
+  .search-box{position:relative; margin-bottom:16px;}
+  .search-box input{
+    width:100%; background:var(--panel); border:1px solid var(--border); color:var(--text);
+    padding:10px 14px; border-radius:8px; font-family:var(--body-ar); font-size:.85rem;
+  }
+  .search-box input:focus{outline:none; border-color:var(--amber-dim);}
+  .search-box input::placeholder{color:var(--text-faint);}
+
+  .nav-group-label{
+    font-family:var(--mono); font-size:.68rem; color:var(--text-faint);
+    text-transform:uppercase; letter-spacing:1px; margin:18px 4px 8px;
+  }
+  .nav-link{
+    display:flex; align-items:baseline; gap:8px;
+    padding:8px 10px; border-radius:8px; color:var(--text-dim);
+    text-decoration:none; font-size:.88rem; cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .nav-link .n{font-family:var(--mono); color:var(--text-faint); font-size:.72rem; min-width:20px;}
+  .nav-link:hover{background:var(--panel); color:var(--text);}
+  .nav-link.active{background:var(--panel-2); color:var(--amber); font-weight:600;}
+  .nav-link.hidden{display:none;}
+
+  .main{flex:1; min-width:0;}
+  .topbar{
+    position:sticky; top:0; z-index:5;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 34px; background:rgba(17,21,27,.85); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);
+  }
+  .topbar .path{font-family:var(--mono); font-size:.78rem; color:var(--text-faint); direction:ltr; unicode-bidi:isolate;}
+  .topbar .path span{color:var(--amber);}
+  #progressLabel{direction:ltr; unicode-bidi:isolate;}
+  .menu-btn{display:none; background:none; border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:8px; cursor:pointer; font-size:1.1rem;}
+
+  .content{max-width:880px; margin:0 auto; padding:50px 34px 140px;}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:40px 0 60px; border-bottom:1px solid var(--border); margin-bottom:50px;}
+  .hero .eyebrow{font-family:var(--mono); color:var(--amber); font-size:.82rem; letter-spacing:.5px; margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+  .hero h1{font-family:var(--serif-ar); font-size:2.6rem; font-weight:900; margin:0 0 16px; line-height:1.3;}
+  .hero h1 em{color:var(--amber); font-style:normal;}
+  .hero p{color:var(--text-dim); font-size:1.05rem; max-width:640px; margin:0 0 26px;}
+  .terminal{
+    background:#0d1116; border:1px solid var(--border); border-radius:12px;
+    padding:20px 22px; font-family:var(--mono); font-size:.86rem; color:#c9d1d9;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
+    direction:ltr; text-align:left; unicode-bidi:isolate;
+  }
+  .terminal .tbar{display:flex; gap:6px; margin-bottom:14px;}
+  .terminal .tbar span{width:11px;height:11px;border-radius:50%; display:inline-block;}
+  .terminal .tbar span:nth-child(1){background:#d9695f;}
+  .terminal .tbar span:nth-child(2){background:#e6a83d;}
+  .terminal .tbar span:nth-child(3){background:#5cb8a6;}
+  .terminal .line{margin:0 0 6px;}
+  .terminal .prompt{color:var(--teal);}
+  .terminal .cmd{color:#e9e7de;}
+  .terminal .out{color:var(--text-faint);}
+  .caret{display:inline-block; width:7px; height:1em; background:var(--amber); vertical-align:middle; animation:blink 1s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+
+  .stat-row{display:flex; gap:28px; margin-top:32px; flex-wrap:wrap;}
+  .stat{}
+  .stat b{font-family:var(--serif-ar); font-size:1.6rem; color:var(--amber); display:block;}
+  .stat span{font-size:.78rem; color:var(--text-faint);}
+
+  /* ---------- Chapter ---------- */
+  .chapter{margin-bottom:70px; scroll-margin-top:90px;}
+  .chapter-head{display:flex; align-items:center; gap:14px; margin-bottom:6px;}
+  .chapter-num{
+    font-family:var(--mono); color:var(--amber); border:1px solid var(--amber-dim);
+    border-radius:6px; padding:2px 9px; font-size:.78rem;
+  }
+  .chapter h2{font-family:var(--serif-ar); font-size:1.9rem; font-weight:800; margin:0;}
+  .chapter .lede{color:var(--text-dim); font-size:.98rem; margin:10px 0 28px; border-right:3px solid var(--amber-dim); padding-right:16px;}
+
+  .dialogue{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px 22px; margin:18px 0;}
+  .dialogue p{margin:0 0 12px;}
+  .dialogue p:last-child{margin-bottom:0;}
+  .dialogue b.who{color:var(--amber); font-family:var(--body-ar); font-weight:700;}
+  .dialogue b.who.k{color:var(--teal);}
+
+  .content h3{font-family:var(--serif-ar); font-size:1.25rem; font-weight:700; margin:32px 0 12px; color:var(--text);}
+  .content h4{font-family:var(--serif-ar); font-size:1.05rem; font-weight:700; margin:22px 0 10px; color:var(--amber);}
+  .content p{margin:0 0 14px; color:#d8d6cd;}
+  .content ul, .content ol{margin:0 0 16px; padding-right:22px; color:#d8d6cd;}
+  .content li{margin-bottom:6px;}
+
+  pre{
+    background:#0d1116; border:1px solid var(--border); border-radius:10px;
+    padding:40px 18px 16px; overflow-x:auto; margin:14px 0 20px; position:relative;
+    direction:ltr; text-align:left;
+  }
+  pre code{font-family:var(--mono); font-size:.84rem; color:#c9d1d9; line-height:1.7; white-space:pre;}
+  .cmt{color:#6b7684;}
+  .copy-btn{
+    position:absolute; left:10px; top:10px; background:var(--panel-2); border:1px solid var(--border);
+    color:var(--text-dim); font-size:.68rem; padding:4px 10px; border-radius:6px; cursor:pointer;
+    font-family:var(--body-ar); direction:rtl; z-index:2; line-height:1.4;
+  }
+  .copy-btn:hover{color:var(--amber); border-color:var(--amber-dim);}
+
+  table{width:100%; border-collapse:collapse; margin:16px 0 22px; font-size:.9rem;}
+  th, td{border:1px solid var(--border); padding:9px 12px; text-align:right;}
+  th{background:var(--panel); color:var(--amber); font-family:var(--body-ar); font-weight:700;}
+  td{color:#d8d6cd;}
+  tr:nth-child(even) td{background:rgba(255,255,255,.015);}
+  code.inline{background:var(--panel-2); border:1px solid var(--border); border-radius:5px; padding:1px 7px; font-family:var(--mono); font-size:.82em; color:var(--amber); direction:ltr; unicode-bidi:isolate; display:inline-block;}
+
+  .note{background:rgba(79,159,232,.08); border:1px solid var(--amber-dim); border-radius:10px; padding:14px 18px; margin:18px 0; font-size:.92rem;}
+  .note b{color:var(--amber);}
+  .warn{background:rgba(217,105,95,.08); border:1px solid #6b3a35; border-radius:10px; padding:14px 18px; margin:18px 0; font-size:.92rem;}
+  .warn b{color:var(--danger);}
+  .extra{background:rgba(92,184,166,.07); border:1px solid #2f5951; border-radius:10px; padding:14px 18px; margin:18px 0; font-size:.92rem;}
+  .extra b{color:var(--teal);}
+
+  .diagram{
+    background:#0d1116; border:1px solid var(--border); border-radius:10px; padding:18px;
+    font-family:var(--mono); font-size:.82rem; color:#c9d1d9; overflow-x:auto; direction:ltr; text-align:left; margin:16px 0 22px;
+  }
+
+  /* ---------- Q&A ---------- */
+  .qa-title{display:flex; align-items:center; gap:10px; margin:36px 0 14px;}
+  .qa-title h3{margin:0;}
+  .qa-badge{font-family:var(--mono); font-size:.68rem; color:var(--bg); background:var(--amber); padding:2px 8px; border-radius:20px; font-weight:700;}
+  details.qa{
+    background:var(--panel); border:1px solid var(--border); border-radius:9px;
+    margin-bottom:10px; overflow:hidden;
+  }
+  details.qa summary{
+    list-style:none; cursor:pointer; padding:13px 18px; font-weight:600; color:var(--text);
+    display:flex; align-items:center; gap:10px; font-size:.94rem;
+  }
+  details.qa summary::-webkit-details-marker{display:none;}
+  details.qa summary::before{
+    content:"›"; color:var(--amber); font-family:var(--mono); font-size:1.1rem;
+    transition:transform .18s; display:inline-block;
+  }
+  details.qa[open] summary::before{transform:rotate(90deg);}
+  details.qa .qa-body{padding:0 18px 16px; color:#d8d6cd; font-size:.92rem; border-top:1px solid var(--border); padding-top:12px;}
+  details.qa .qa-body pre{margin-top:10px;}
+
+  /* ---------- Assignments ---------- */
+  .assign-block{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:24px 26px; margin:20px 0 30px;}
+  .assign-block h4{margin-top:0; color:var(--amber); font-size:1.05rem;}
+  .assign-block .tag{display:inline-block; background:var(--panel-2); color:var(--teal); font-family:var(--mono); font-size:.68rem; padding:3px 9px; border-radius:20px; margin-bottom:12px;}
+  .step-label{font-family:var(--mono); font-size:.72rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:.5px; margin:16px 0 6px;}
+
+  footer{border-top:1px solid var(--border); padding:40px 34px; text-align:center; color:var(--text-faint); font-size:.85rem;}
+
+  /* ---------- Search highlight ---------- */
+  mark{background:var(--amber); color:#141821; border-radius:2px; padding:0 2px;}
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 900px){
+    .sidebar{
+      position:fixed; right:0; top:0; z-index:20; transform:translateX(100%);
+      transition:transform .25s; width:82%; max-width:320px; box-shadow:-10px 0 40px rgba(0,0,0,.4);
+    }
+    .sidebar.open{transform:translateX(0);}
+    .menu-btn{display:inline-block;}
+    .content{padding:34px 20px 100px;}
+    .hero h1{font-size:1.9rem;}
+    .topbar{padding:12px 18px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="dot"></span>
+      <span class="brand-title">Kubernetes: حكاية زكا وكريم</span>
+    </div>
+    <div class="brand-sub">$ kubectl get chapters</div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="دور في الكتاب... (بحث)">
+    </div>
+
+    <div id="navContainer"></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <div class="path">~/k8s-course/<span id="pathCurrent">intro</span></div>
+      <div style="font-family:var(--mono); font-size:.72rem; color:var(--text-faint);" id="progressLabel"></div>
+    </div>
+
+    <div class="content" id="content">
+
+      <section class="hero" id="intro">
+        <div class="eyebrow">$ kubectl whoami<span class="caret"></span></div>
+        <h1>تتعلم <em>Kubernetes</em> زي ما بتتفرج على حكاية،<br>مش زي ما بتحفظ محاضرة.</h1>
+        <p>الموقع ده منهج Kubernetes كامل من الصفر — من أول "ليه أصلاً محتاجين orchestration" لحد الـ Labs العملية الكاملة على minikube. متحكي على شكل حوار بين <b style="color:var(--text)">زكا</b> (مهندس بيتعلم) و<b style="color:var(--text)">الأستاذ كريم</b> (مهندس DevOps خبير). كل فصل فيه شرح، أمثلة YAML حقيقية، أسئلة وأجوبة تتفتح بالضغط، ولاب عملي كامل في الآخر.</p>
+
+        <div class="terminal">
+          <div class="tbar"><span></span><span></span><span></span></div>
+          <div class="line"><span class="prompt">zekaa@learning</span><span class="cmd">:~$ </span><span class="cmd">kubectl explain course</span></div>
+          <div class="line out">16 chapters · 4 labs عملية كاملة · Architecture + RBAC + Workloads + Networking + Storage + Helm + kubectl Reference</div>
+          <div class="line"><span class="prompt">zekaa@learning</span><span class="cmd">:~$ </span><span class="cmd">minikube start --with-story<span class="caret"></span></span></div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat"><b>16</b><span>فصل شرح كامل</span></div>
+          <div class="stat"><b>4</b><span>Labs عملية على minikube</span></div>
+          <div class="stat"><b>60+</b><span>سؤال وجواب سريع</span></div>
+          <div class="stat"><b>100%</b><span>مصطلحات تقنية بالإنجليزي</span></div>
+        </div>
+      </section>
+
+      <div id="chapters"></div>
+
+    </div>
+
+    <footer>
+      $ kubectl apply -f your_k8s_skills.yaml — كتاب Kubernetes: حكاية زكا وكريم
+    </footer>
+  </div>
+
+</div>
+
+<script>
+/* ============ DATA WILL BE INSERTED HERE ============ */
+const CHAPTERS = [];
+CHAPTERS.push({
+  id:"ch1", num:"01", title:"ليه أصلاً محتاجين Kubernetes؟", navTitle:"مقدمة: المشكلة والحل",
+  lede:"زكا كان مسؤول عن سيرفر فيه شوية containers، وكل يوم بيصحى يكتشف واحد فيهم واقف من الليل.",
+  body:`
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> أستاذ كريم، أنا شغال بـ Docker وعامل شوية containers، بس المشكلة إن أي container يقع بالليل، محدش بيرجّعه إلا أنا لما أصحى وأكتشف!</p>
+    <p><b class="who k">كريم:</b> ده بالظبط السبب اللي Kubernetes اتعمل عشانه. تخيل معايا: عندك مش container واحد، عندك 50 container، موزعين على 10 سيرفرات. عايز تعمل update من غير downtime؟ عايز لو سيرفر كامل وقع تنقل اللي عليه لسيرفر تاني تلقائي؟ تعمل ده كله يدوي كل يوم؟ مستحيل. الحل اسمه <b>Container Orchestration</b>، وKubernetes هو الأشهر فيه.</p>
+  </div>
+
+  <h3>مشكلة إدارة الـ Containers يدوياً</h3>
+  <p>لما بتشتغل بـ Docker لوحده على سيرفر واحد، إنت مسؤول شخصياً عن حاجات كتير:</p>
+  <ul>
+    <li>لو الـ container وقع، محدش هيرجّعه غيرك (يدوياً).</li>
+    <li>لو محتاج تزود عدد النسخ (scale) وقت ضغط عالي، لازم تعمل ده يدوي.</li>
+    <li>لو عايز توزّع الطلبات (traffic) على أكتر من نسخة، محتاج تعمل load balancer بنفسك.</li>
+    <li>لو عايز تعمل update للـ image من غير ما الموقع يقف (downtime)، العملية معقدة ومحتاجة تنسيق يدوي دقيق.</li>
+  </ul>
+
+  <h3>الحل: Orchestration</h3>
+  <p><b>Kubernetes</b> (يُختصر أحياناً <code class="inline">k8s</code>) هو نظام لإدارة الـ containers تلقائياً عبر مجموعة من السيرفرات. مهمته الأساسية إنه "يراقب" حالة تطبيقك باستمرار، ويتصرف لوحده عشان يخليه في الحالة اللي إنت طالبها، من غير أي تدخل يدوي منك.</p>
+
+  <div class="note"><b>فكرة أساسية:</b> إنت متتكلمش مع Kubernetes بأسلوب "روح اعمل كذا دلوقتي" (Imperative)، إنت بتقوله "أنا عايز الوضع يكون كذا" (Declarative)، وهو المسؤول إنه يوصلك للوضع ده ويحافظ عليه.</p></div>
+
+  <h3>الـ Declarative Model</h3>
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> يعني إيه بالظبط "Declarative"؟</p>
+    <p><b class="who k">كريم:</b> بدل ما تكتب سكريبت بيقول "شغّل container، لو وقع شغّله تاني، لو الحمل زاد زوّد نسخة"... إنت بتكتب ملف YAML بيقول "أنا عايز 3 نسخ من nginx شغالين دايماً". Kubernetes بياخد الوصف ده ويشتغل هو على تحقيقه، وأهم حاجة: بيفضل يحافظ عليه طول الوقت.</p>
+  </div>
+
+  <h3>Reconciliation Loop — قلب الفكرة كلها</h3>
+  <p>ده المفهوم اللي كل حاجة في Kubernetes مبنية عليه. فيه حالتين دايماً بيتقارنوا مع بعض:</p>
+  <ul>
+    <li><b>Desired State</b> — الحالة اللي إنت طلبتها في ملف الـ YAML (مثلاً: "عايز 3 replicas").</li>
+    <li><b>Actual State</b> — الحالة الفعلية الحقيقية دلوقتي (مثلاً: "فيه 2 شغالين بس").</li>
+  </ul>
+  <p>فيه "حلقة" (loop) شغالة جوه Kubernetes بتقارن بين الاتنين دول <b>باستمرار وبدون توقف</b>. لو لقت فرق، بتتصرف فوراً عشان تقرّب الـ Actual من الـ Desired.</p>
+
+  <div class="diagram">
+┌─────────────────┐         compare          ┌─────────────────┐
+│  Desired State   │ ◄──────────────────────► │   Actual State   │
+│  (من YAML بتاعك)  │                           │  (الواقع الفعلي)  │
+└─────────────────┘                           └─────────────────┘
+         │                                              ▲
+         │              لو فيه فرق: تصرّف فوراً            │
+         └──────────────────────────────────────────────┘
+  </div>
+
+  <div class="extra"><b>معلومة إضافية:</b> الحلقة دي شغالة على كل مستوى في Kubernetes، مش بس على عدد الـ Pods. فيه Controller مختلف لكل نوع مورد (Node, Deployment, Endpoint...)، وكل واحد فيهم عنده حلقة Reconciliation خاصة بيه، وكلهم شغالين بالتوازي طول الوقت.</div>
+
+  <h3>Cluster: الوحدة الأساسية في Kubernetes</h3>
+  <p>مجموعة السيرفرات اللي Kubernetes بيدير عليها التطبيقات اسمها <b>Cluster</b>. الـ Cluster بيتكوّن من نوعين من الأجهزة (Nodes):</p>
+  <table>
+    <tr><th>النوع</th><th>الوظيفة</th></tr>
+    <tr><td><b>Control Plane Node(s)</b></td><td>"المخ" — بياخد القرارات، مش بيشغّل تطبيقات المستخدم مباشرة</td></tr>
+    <tr><td><b>Worker Node(s)</b></td><td>"العضلات" — دي اللي فعلياً بتشغّل containers المستخدم</td></tr>
+  </table>
+  <p>هنشرح كل واحد من التلاتة (Control Plane وWorker Node) بالتفصيل في الفصلين الجايين.</p>
+  `,
+  qa:[
+    {q:"إيه الفرق بين Imperative وDeclarative في التعامل مع Kubernetes؟", a:"Imperative يعني تديله أوامر خطوة بخطوة (اعمل كذا، بعدين كذا). Declarative يعني تقوله بس «عايز الوضع يكون كذا» وهو المسؤول إنه يوصلك له ويحافظ عليه. Kubernetes مبني أساساً على الأسلوب الـ Declarative."},
+    {q:"إيه هو الـ Reconciliation Loop؟", a:"حلقة شغالة باستمرار بتقارن بين Desired State (المطلوب من ملف YAML) وActual State (الواقع الفعلي)، ولو لقت فرق بتتصرف فوراً عشان تقرّب الاتنين من بعض."},
+    {q:"الـ Cluster بيتكون من إيه؟", a:"Control Plane Node(s) وهي المسؤولة عن اتخاذ القرارات، وWorker Node(s) وهي المسؤولة عن تشغيل containers المستخدم فعلياً."},
+    {q:"ليه إدارة الـ containers يدوياً بتبقى مشكلة مع الوقت؟", a:"لإن العمليات زي self-healing وscaling وload balancing وrolling updates بتحتاج تنسيق يدوي معقد ومستمر لو كان عندك أكتر من container أو أكتر من سيرفر — ده اللي orchestration جاي يحله تلقائياً."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch2", num:"02", title:"Control Plane: مخ الـ Cluster", navTitle:"Control Plane",
+  lede:"كريم رسم على السبورة أربعة صناديق، وقال لزكا: دي الأربعة مكونات اللي بتاخد كل القرارات في الـ Cluster.",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> الـ Control Plane مش بيشغّل تطبيقك، هو بس بياخد القرارات ويسجّلها. فيه أربع مكونات أساسية جواه، كل واحد له دور محدد جداً ومايتدخلش في شغل التاني.</p>
+  </div>
+
+  <h3>1. kube-apiserver — البوابة الوحيدة</h3>
+  <p>كل تواصل مع الـ Cluster، سواء منك إنت (عن طريق <code class="inline">kubectl</code>) أو من أي مكوّن داخلي تاني، لازم يعدّي من هنا. الـ API Server هو الباب الوحيد المسموح بيه.</p>
+  <ul>
+    <li>بيستقبل كل الطلبات (requests) ويتحقق من صلاحيتها (Authentication + Authorization).</li>
+    <li><b>Stateless</b> — يعني هو نفسه مابيخزنش أي حالة، كل التخزين بيروح لـ etcd.</li>
+    <li>ممكن يكون فيه أكتر من نسخة منه شغالة في نفس الوقت (للـ High Availability).</li>
+  </ul>
+
+  <h3>2. etcd — الذاكرة الوحيدة للحقيقة</h3>
+  <p>قاعدة بيانات موزعة (distributed database) من نوع key-value، بتخزن <b>كل حالة الـ Cluster</b> بدون استثناء: كل الـ Pods، الـ Deployments، الـ Secrets، كل حاجة.</p>
+  <div class="note"><b>مهم:</b> لو etcd ضاع أو اتبعثر، الـ Cluster فعلياً بيفقد ذاكرته بالكامل. عشان كده بيتعمله backup دوري في بيئات الإنتاج (production)، وبيستخدم بروتوكول اسمه <b>Raft</b> عشان يضمن التوافق (consistency) بين النسخ المختلفة منه.</div>
+
+  <h3>3. kube-scheduler — بيقرر بس مش بينفذ</h3>
+  <p>لما تتعمل Pod جديدة، حد لازم يقرر "هتشتغل على أنهي Node؟". ده بالظبط شغل الـ Scheduler، وبيشتغل بمرحلتين:</p>
+  <table>
+    <tr><th>المرحلة</th><th>الوصف</th></tr>
+    <tr><td><b>Filtering</b></td><td>بيستبعد أي Node مايصلحش (مفيهوش موارد كافية مثلاً)</td></tr>
+    <tr><td><b>Scoring</b></td><td>من اللي فضلوا، بيدّي كل Node نقطة، وبيختار الأعلى</td></tr>
+  </table>
+  <div class="warn"><b>لاحظ:</b> الـ Scheduler <b>بيقرر بس</b>، هو مش اللي فعلياً بيشغّل الـ Pod. القرار بيتسجل في etcd عن طريق API Server، والتنفيذ الفعلي مسؤولية الـ kubelet على الـ Node المختار (هنشرحه في الفصل الجاي).</div>
+
+  <h3>4. kube-controller-manager — مجموعة "المراقبين"</h3>
+  <p>مش مكوّن واحد، ده فعلياً برنامج بيشغّل جواه <b>مجموعة controllers</b> منفصلة، كل واحد منهم مسؤول عن حلقة Reconciliation لمورد معين:</p>
+  <ul>
+    <li><b>Node Controller</b> — بيراقب حالة الـ Nodes (شغالة ولا واقعة).</li>
+    <li><b>ReplicaSet Controller</b> — بيضمن إن عدد الـ Pods الفعلي = العدد المطلوب.</li>
+    <li><b>Deployment Controller</b> — بيدير عملية الـ Rolling Update والـ Rollback.</li>
+    <li><b>Endpoint Controller</b> — بيربط الـ Services بالـ Pods اللي وراها.</li>
+  </ul>
+
+  <div class="diagram">
+kubectl  ──────►  kube-apiserver  ◄──────►  etcd
+                        │  ▲
+                        ▼  │
+              kube-scheduler   kube-controller-manager
+                 (بيقرر)         (بيراقب ويصلّح)
+  </div>
+
+  <div class="extra"><b>معلومة إضافية:</b> كل الأربع مكونات دول بيتواصلوا مع بعض <b>فقط</b> عن طريق kube-apiserver. مفيش مكوّن بيكلم مكوّن تاني مباشرة — ده تصميم مقصود بيخلي النظام قابل للتوسع (scalable) وأسهل في الصيانة.</div>
+  `,
+  qa:[
+    {q:"ليه kube-apiserver بيوصف بإنه Stateless؟", a:"لإنه مابيخزنش أي بيانات بنفسه، كل شيء بيتخزن في etcd. هو بس بوابة عبور (gateway) للطلبات."},
+    {q:"إيه اللي بيحصل لو etcd اتعطل أو ضاعت بياناته؟", a:"الـ Cluster بيفقد كل ذاكرته عن حالته الحقيقية — مين الـ Pods الموجودة، إعداداتها، كل حاجة. عشان كده لازم backup دوري في بيئة الإنتاج."},
+    {q:"إيه الفرق بين Filtering وScoring في kube-scheduler؟", a:"Filtering بيستبعد الـ Nodes اللي مش صالحة أصلاً (زي نقص الموارد)، وScoring بيدّي نقاط لللي فضلوا ويختار صاحب أعلى نقطة."},
+    {q:"هل kube-scheduler هو اللي بيشغّل الـ Pod فعلياً على الـ Node؟", a:"لأ، هو بس بيقرر أنهي Node. التنفيذ الفعلي (تشغيل الـ container) مسؤولية kubelet على الـ Node اللي اتم اختياره."},
+    {q:"اذكر مثالين من الـ controllers اللي بيشتغلوا جوه kube-controller-manager", a:"ReplicaSet Controller (بيحافظ على عدد الـ Pods) وDeployment Controller (بيدير الـ Rolling Update)، وكمان فيه Node Controller وEndpoint Controller."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch3", num:"03", title:"Worker Node: مكان التنفيذ الفعلي", navTitle:"Worker Node",
+  lede:"زكا: طب لو الـ Control Plane بيقرر بس، مين اللي فعلياً بيشغّل الـ containers بتاعتي؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> يعني الـ Control Plane مابيلمسش الـ containers خالص؟</p>
+    <p><b class="who k">كريم:</b> بالظبط. كل التنفيذ الفعلي بيحصل على الـ Worker Nodes، وفيها تلات مكونات أساسية بتشتغل مع بعض.</p>
+  </div>
+
+  <h3>1. kubelet — العميل المحلي على كل Node</h3>
+  <p>الـ kubelet هو "العميل" اللي شغال على كل Worker Node، ومسؤول عن:</p>
+  <ul>
+    <li>بيكلم kube-apiserver باستمرار ويسأل "فيه حاجة مطلوب مني أعملها؟".</li>
+    <li>بيبعت <b>heartbeat</b> دوري يقول "أنا لسه شغال" — لو توقف عن كده، الـ Node Controller بيعتبر الـ Node ده "مش موجود".</li>
+    <li>مسؤول عن <b>Self-Healing محلي</b>: لو container وقع على الـ Node بتاعه، هو بيحاول يرجّعه فوراً من غير ما ينتظر رد من الـ Control Plane.</li>
+  </ul>
+
+  <h3>2. Container Runtime — اللي فعلياً بيشغّل الـ Container</h3>
+  <p>الـ kubelet مش بيشغّل الـ container بنفسه مباشرة، هو بيكلم برنامج منفصل اسمه <b>Container Runtime</b> (زي <code class="inline">containerd</code> غالباً) عشان يعمل ده. المعيار (standard) اللي بيربط بينهم اسمه <b>CRI</b> (Container Runtime Interface).</p>
+  <div class="note"><b>ليه المعيار ده مهم؟</b> عشان Kubernetes يفضل شغال مع أي container runtime طالما بيتبع CRI، من غير ما يكون مربوط (locked) بأداة معينة.</div>
+
+  <h3>3. kube-proxy — توزيع الشبكة على مستوى الـ Node</h3>
+  <p>مسؤول عن قواعد الشبكة (networking rules) اللي بتخلي الطلبات توصل للـ Pods الصح، باستخدام <code class="inline">iptables</code> أو <code class="inline">IPVS</code>. بيعمل نوع بسيط من الـ Load Balancing على مستوى الـ Node.</p>
+
+  <div class="diagram">
+        Worker Node
+┌──────────────────────────┐
+│   kubelet  ◄────────────────── kube-apiserver (بيسأله عن الـ tasks)
+│      │                    │
+│      ▼                    │
+│  Container Runtime         │
+│   (containerd)             │
+│      │                    │
+│      ▼                    │
+│   [ Container ]            │
+│                            │
+│   kube-proxy (شبكة)         │
+└──────────────────────────┘
+  </div>
+
+  <h3>ملخص: مين بيكلم مين؟</h3>
+  <table>
+    <tr><th>المكوّن</th><th>مكانه</th><th>مسؤوليته الأساسية</th></tr>
+    <tr><td>kube-apiserver</td><td>Control Plane</td><td>البوابة الوحيدة لكل الطلبات</td></tr>
+    <tr><td>etcd</td><td>Control Plane</td><td>تخزين حالة الـ Cluster بالكامل</td></tr>
+    <tr><td>kube-scheduler</td><td>Control Plane</td><td>يقرر أنهي Node هتشغّل الـ Pod</td></tr>
+    <tr><td>kube-controller-manager</td><td>Control Plane</td><td>يراقب ويصلّح الفرق بين Desired وActual</td></tr>
+    <tr><td>kubelet</td><td>Worker Node</td><td>ينفّذ الأوامر، يراقب محلياً</td></tr>
+    <tr><td>Container Runtime</td><td>Worker Node</td><td>يشغّل الـ container فعلياً</td></tr>
+    <tr><td>kube-proxy</td><td>Worker Node</td><td>يوجّه الشبكة للـ Pods الصح</td></tr>
+  </table>
+
+  <div class="extra"><b>معلومة إضافية:</b> ممكن Node واحد يكون Control Plane وWorker في نفس الوقت (زي minikube اللي هنستخدمه في اللابات)، لكن في بيئات الإنتاج الحقيقية بيتفصلوا دايماً لأسباب أمان وأداء.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق بين kubelet وContainer Runtime؟", a:"kubelet هو العميل اللي بيكلم Control Plane ويقرر إيه المطلوب، لكن هو نفسه مابيشغلش الـ container. هو بيطلب من Container Runtime (زي containerd) إنه يشغّله فعلياً."},
+    {q:"إيه معنى CRI ولية موجود؟", a:"Container Runtime Interface — معيار بيسمح لـ kubelet إنه يشتغل مع أي container runtime طالما بيتبع المعيار ده، من غير ما يكون مربوط بأداة واحدة بعينها."},
+    {q:"إيه اللي بيحصل لو kubelet توقف عن إرسال الـ heartbeat؟", a:"الـ Node Controller (في Control Plane) بيعتبر الـ Node ده مش متاح، وبيبدأ يتعامل معاه كأنه واقع."},
+    {q:"مين المسؤول عن Self-Healing المحلي السريع (قبل ما يستنى رد من الـ Control Plane)؟", a:"kubelet — بيحاول يرجّع الـ container اللي وقع على نفس الـ Node فوراً."},
+    {q:"إيه شغل kube-proxy بالظبط؟", a:"مسؤول عن قواعد الشبكة اللي بتوجّه الطلبات للـ Pods الصحيحة، باستخدام iptables أو IPVS."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch4", num:"04", title:"RBAC: مين مسموحله يعمل إيه", navTitle:"RBAC",
+  lede:"كريم: تخيل إن أي حد جوه الشركة يقدر يمسح أي Pod في الـ Cluster. ده كابوس أمني. الحل اسمه RBAC.",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> RBAC اختصار لـ Role-Based Access Control. الفكرة إنك بتحدد "مين" مسموحله "يعمل إيه" على "أنهي موارد". وده بيتفعّل جوه kube-apiserver نفسه، في مرحلة اسمها Authorization، بعد ما يتأكد أصلاً إنك مين (Authentication).</p>
+  </div>
+
+  <h3>المكونات التلاتة لـ RBAC</h3>
+  <table>
+    <tr><th>المكوّن</th><th>الوظيفة</th></tr>
+    <tr><td><b>Role / ClusterRole</b></td><td>مجموعة صلاحيات (مثلاً: "تقدر تقرأ Pods بس")</td></tr>
+    <tr><td><b>Subject</b></td><td>مين اللي هياخد الصلاحية (User, Group, أو ServiceAccount)</td></tr>
+    <tr><td><b>RoleBinding / ClusterRoleBinding</b></td><td>الربط بين الـ Role والـ Subject</td></tr>
+  </table>
+
+  <h3>Role مقابل ClusterRole</h3>
+  <ul>
+    <li><b>Role</b> — صلاحياته محدودة بـ Namespace واحد بس.</li>
+    <li><b>ClusterRole</b> — صلاحياته تغطي الـ Cluster كله (أو مورد مش مرتبط بـ Namespace أصلاً زي الـ Nodes).</li>
+  </ul>
+
+  <h3>مثال: Role بسيط يسمح بقراءة الـ Pods بس</h3>
+  <pre><code>apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: pod-reader
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]</code></pre>
+
+  <p>وبعدين لازم تربطه بـ Subject معين عن طريق RoleBinding:</p>
+  <pre><code>apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pods-binding
+  namespace: default
+subjects:
+  - kind: User
+    name: zekaa
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io</code></pre>
+
+  <div class="note"><b>لاحظ:</b> الملف الأول (Role) بس بيعرّف "إيه المسموح"، مالوش أي معنى عملي لحد ما تربطه بـ Subject عن طريق RoleBinding. الاتنين لازم يكونوا موجودين مع بعض.</div>
+
+  <h3>الـ Subjects التلاتة</h3>
+  <table>
+    <tr><th>النوع</th><th>الوصف</th></tr>
+    <tr><td><b>User</b></td><td>مستخدم بشري حقيقي</td></tr>
+    <tr><td><b>Group</b></td><td>مجموعة مستخدمين</td></tr>
+    <tr><td><b>ServiceAccount</b></td><td>"هوية" خاصة بتطبيق أو Pod نفسه، مش إنسان</td></tr>
+  </table>
+
+  <div class="extra"><b>معلومة إضافية:</b> الـ ServiceAccount مهم جداً في الواقع العملي — لو عندك تطبيق جوه Pod محتاج يكلم kube-apiserver بنفسه (مثلاً يعمل list على Pods تانية)، بيستخدم ServiceAccount مربوط بـ Role مناسب، مش يوزر بشري.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق بين Role وClusterRole؟", a:"Role صلاحياته محدودة بـ Namespace واحد، وClusterRole صلاحياته على مستوى الـ Cluster كله أو موارد مش مرتبطة بـ Namespace أصلاً."},
+    {q:"ليه Role لوحده مش كافي، ومحتاجين RoleBinding كمان؟", a:"لإن Role بس بيعرّف «إيه المسموح به» كقالب صلاحيات، لكن مايحددش مين هياخده. الـ RoleBinding هو اللي بيربط الصلاحيات دي فعلياً بـ Subject معين."},
+    {q:"إمتى بنستخدم ServiceAccount بدل User؟", a:"لما يكون التطبيق أو الـ Pod نفسه محتاج يكلم kube-apiserver (زي إنه يعمل list على موارد تانية)، مش مستخدم بشري."},
+    {q:"في أنهي مرحلة من مراحل معالجة الطلب بيتفعّل RBAC؟", a:"في مرحلة Authorization جوه kube-apiserver، وده بيحصل بعد التأكد من هوية الطالب (Authentication)."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch5", num:"05", title:"Pod: أصغر وحدة تشغيل", navTitle:"Pod",
+  lede:"زكا سأل: طب أنا هشغّل containers، ليه Kubernetes بيتكلم عن حاجة اسمها Pod أصلاً؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> ليه مانشغلش الـ container مباشرة زي ما بنعمل في Docker عادي؟</p>
+    <p><b class="who k">كريم:</b> لإن Kubernetes مابيشتغلش مع containers مباشرة. أصغر وحدة تشغيل عنده اسمها <b>Pod</b>. الـ Pod ممكن يشيل container واحد (الحالة الأشيع) أو أكتر من container مع بعض، بيشاركوا نفس الـ IP، ونفس مساحة التخزين، ونفس دورة الحياة (lifecycle).</p>
+  </div>
+
+  <h3>خصائص الـ Pod المهمة</h3>
+  <ul>
+    <li>هو الوحدة الأصغر اللي Kubernetes بيديرها، مش الـ container.</li>
+    <li>كل الـ containers جوه نفس الـ Pod بيشاركوا نفس الـ IP الداخلي.</li>
+    <li><b>Ephemeral</b> (مؤقت/فاني) — لو الـ Pod مات، هو مابيرجعش بنفس الهوية أبداً، بيتعمل Pod جديد تماماً بـ IP واسم مختلفين.</li>
+  </ul>
+
+  <div class="warn"><b>مهم:</b> Pod لوحده (من غير controller زي ReplicaSet أو Deployment فوقه) لو اتمسح، <b>مش هيرجع تاني خالص</b>. الحماية والـ Self-Healing بتيجي من الـ controllers اللي بندير بيها الـ Pod، مش من الـ Pod نفسه.</div>
+
+  <h3>نمط Sidecar</h3>
+  <p>من أشهر استخدامات وجود أكتر من container جوه Pod واحد: تحط container رئيسي (زي تطبيقك) + container مساعد (sidecar) بيعمل حاجة زي تجميع الـ logs أو مراقبة إضافية، وبما إنهم بيشاركوا نفس الشبكة والتخزين، التواصل بينهم بيبقى سهل جداً.</p>
+
+  <h3>🔧 Lab عملي: أول Pod من ملف YAML</h3>
+  <div class="assign-block">
+    <span class="tag">LAB 1</span>
+    <p>هنعمل مجلد للعمل ونكتب أول Pod من الصفر.</p>
+
+    <div class="step-label">الخطوة 1: تجهيز المجلد</div>
+    <pre><code>mkdir ~/k8s-labs
+cd ~/k8s-labs
+nano pod.yaml</code></pre>
+
+    <div class="step-label">الخطوة 2: محتوى pod.yaml</div>
+    <pre><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: my-nginx-pod
+  labels:
+    app: my-nginx
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx:latest
+      ports:
+        - containerPort: 80</code></pre>
+
+    <div class="step-label">الخطوة 3: التطبيق والفحص</div>
+    <pre><code>kubectl apply -f pod.yaml
+kubectl get pods
+kubectl describe pod my-nginx-pod</code></pre>
+
+    <div class="note"><b>لاحظ في describe:</b> هتشوف سلسلة Events بالترتيب: <code class="inline">Scheduled</code> → <code class="inline">Pulling</code> → <code class="inline">Pulled</code> → <code class="inline">Created</code> → <code class="inline">Started</code>. كل خطوة فيهم بتعكس مكوّن مختلف اشتغل (Scheduler، بعدها kubelet وContainer Runtime).</div>
+
+    <div class="step-label">الخطوة 4: التجربة الأهم — امسح الـ Pod ولاحظ</div>
+    <pre><code>kubectl delete pod my-nginx-pod
+kubectl get pods
+<span class="cmt"># النتيجة: No resources found — الـ Pod ما رجعش خالص!</span></code></pre>
+    <p>ده بيثبت عملياً إن Pod لوحده بدون controller مايترصدش (self-healing) لو اتمسح.</p>
+  </div>
+  `,
+  qa:[
+    {q:"إيه هي أصغر وحدة تشغيل في Kubernetes؟", a:"Pod، مش container. الـ Pod ممكن يحتوي على container واحد أو أكتر بيشاركوا نفس الـ IP والتخزين ودورة الحياة."},
+    {q:"لو مسحت Pod لوحده (من غير أي controller فوقه)، هل هيرجع تاني؟", a:"لأ، أبداً. الـ Pod لوحده مالوش أي حماية self-healing. الحماية دي بتيجي بس من controller زي ReplicaSet أو Deployment."},
+    {q:"إيه معنى إن الـ Pod «Ephemeral»؟", a:"يعني مؤقت/فاني — لو مات، الـ Pod الجديد اللي هيتعمل مكانه هيبقى له هوية جديدة تماماً (اسم وIP مختلفين)، مش «إحياء» لنفس الـ Pod القديم."},
+    {q:"إيه هو نمط Sidecar؟", a:"إنك تحط container إضافي مساعد جوه نفس الـ Pod بتاع تطبيقك الرئيسي، عشان يستفيد من مشاركة نفس الشبكة والتخزين معاه بسهولة."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch6", num:"06", title:"ReplicaSet: الحفاظ على العدد", navTitle:"ReplicaSet",
+  lede:"زكا شاف بعينه إن الـ Pod مابيرجعش لوحده. كريم قاله: تمام، يبقى محتاجين حد «يحرسه».",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> الـ ReplicaSet وظيفته بسيطة جداً: يضمن إن عدد الـ Pods الشغالة يفضل مطابق للعدد اللي إنت طلبته، طول الوقت. ده تطبيق مباشر لفكرة الـ Reconciliation Loop اللي اتكلمنا عنها.</p>
+  </div>
+
+  <h3>إزاي ReplicaSet بيلاقي الـ Pods بتاعته؟</h3>
+  <p>عن طريق <b>Labels</b> و<b>Selectors</b>. الـ ReplicaSet بيحدد <code class="inline">selector.matchLabels</code>، وأي Pod عنده نفس الـ label ده (حتى لو اتعمل بره الـ ReplicaSet) هيتحسب "بتاعه".</p>
+
+  <div class="warn"><b>حدود مهمة:</b> الـ ReplicaSet بيهتم بـ <b>العدد بس</b>، مش بمحتوى الـ template. لو عدّلت الـ image في ملف الـ ReplicaSet وعملت apply، الـ Pods القديمة هتفضل شغالة بالـ image القديم — مفيش Rolling Update هنا. ده بالظبط سبب وجود Deployment (الفصل الجاي).</div>
+
+  <h3>🔧 Lab عملي: ReplicaSet بـ 3 نسخ + تجربة Self-Healing</h3>
+  <div class="assign-block">
+    <span class="tag">LAB 2</span>
+
+    <div class="step-label">الخطوة 1: replicaset.yaml</div>
+    <pre><code>apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: my-nginx-rs
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-nginx
+  template:
+    metadata:
+      labels:
+        app: my-nginx
+    spec:
+      containers:
+        - name: nginx-container
+          image: nginx:latest
+          ports:
+            - containerPort: 80</code></pre>
+
+    <div class="note"><b>بنية الملف:</b> فيه <code class="inline">metadata</code> و<code class="inline">spec</code> خاصين بالـ ReplicaSet نفسه (فوق)، وفيه <code class="inline">template.metadata</code> و<code class="inline">template.spec</code> خاصين بالـ Pod اللي هيتعمل (جوه). الاتنين لازم يستخدموا نفس بنية الـ Pod العادي. وأهم قاعدة: <code class="inline">selector.matchLabels</code> لازم يطابق <code class="inline">template.metadata.labels</code> بالظبط، وإلا الـ ReplicaSet مش هيعرف يتعرف على الـ Pods بتاعته.</div>
+
+    <div class="step-label">الخطوة 2: التطبيق والفحص</div>
+    <pre><code>kubectl apply -f replicaset.yaml
+kubectl get pods
+kubectl get replicasets</code></pre>
+
+    <div class="step-label">الخطوة 3: تجربة Self-Healing — امسح Pod واحد بس</div>
+    <pre><code><span class="cmt"># خد اسم أي Pod من عندك وامسحه</span>
+kubectl delete pod my-nginx-rs-xxxxx
+
+<span class="cmt"># فوراً بعدها</span>
+kubectl get pods</code></pre>
+    <p>هتلاحظ فوراً إن Pod جديد بإسم مختلف تماماً ظهر يعوّض الناقص، بينما الـ Pod اللي اتمسح لسه في حالة <code class="inline">Terminating</code>. ده الفرق الجوهري عن اللاب اللي فات: هنا فيه controller بيراقب ويصلّح تلقائياً.</p>
+
+    <div class="step-label">الخطوة 4: تنظيف — مسح الـ ReplicaSet بالكامل</div>
+    <pre><code>kubectl delete rs my-nginx-rs
+kubectl get pods
+<span class="cmt"># No resources found — لإن مسح الـ ReplicaSet بيمسح كل الـ Pods اللي "يملكها" معاه</span></code></pre>
+  </div>
+  `,
+  qa:[
+    {q:"إزاي ReplicaSet بيعرف إن Pod معين «بتاعه»؟", a:"عن طريق مطابقة الـ Labels — أي Pod عنده label بيطابق selector.matchLabels بتاع الـ ReplicaSet بيتحسب بتاعه، حتى لو اتعمل خارج الـ ReplicaSet نفسه."},
+    {q:"لو غيرت الـ image في replicaset.yaml وعملت apply، هل الـ Pods القديمة هتتحدث؟", a:"لأ. الـ ReplicaSet بيهتم بالعدد بس، مش بمحتوى الـ template. الـ Pods القديمة هتفضل شغالة بالـ image القديم."},
+    {q:"لو مسحت Pod واحد من ReplicaSet فيه 3 replicas، إيه اللي بيحصل؟", a:"الـ ReplicaSet بيلاحظ إن العدد الفعلي بقى 2 بدل 3، فبيطلب من kube-apiserver إنشاء Pod جديد فوراً يعوّض الناقص — وده اسمه Self-Healing."},
+    {q:"لو مسحت الـ ReplicaSet نفسه، إيه مصير الـ Pods اللي جواه؟", a:"بيتمسحوا كلهم تلقائياً معاه، لإن الـ ReplicaSet هو «مالكهم» (owner)."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch7", num:"07", title:"Deployment: التحديث الآمن", navTitle:"Deployment",
+  lede:"كريم: تخيل عايز تغيّر نسخة nginx من غير ما الموقع يقف ولا ثانية. مين هيعمل الشغل الدقيق ده؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> يعني ReplicaSet مش كفاية؟</p>
+    <p><b class="who k">كريم:</b> ReplicaSet بيحافظ على العدد بس، مايعرفش يدير عملية تغيير الـ image بأمان. الـ Deployment جاي فوقه بالظبط عشان كده — هو بيدير ReplicaSet، مش الـ Pods مباشرة.</p>
+  </div>
+
+  <h3>السلسلة الكاملة</h3>
+  <div class="diagram">
+Deployment  ──creates & manages──►  ReplicaSet  ──creates & manages──►  Pods
+  </div>
+  <p>لما تعمل Deployment، هو بيعمل ReplicaSet تلقائياً بإسم فيه hash عشوائي (زي <code class="inline">my-nginx-deployment-659fc6df7c</code>)، وده اللي بيعمل الـ Pods فعلياً.</p>
+
+  <h3>Rolling Update</h3>
+  <p>لما تغيّر الـ image في Deployment، هو بيعمل <b>ReplicaSet جديد</b> بالإصدار الجديد، ويبدأ يزود الـ Pods فيه تدريجياً بينما يقلل الـ Pods في الـ ReplicaSet القديم — بالتوازي، مش دفعة واحدة. ده بيضمن <b>Zero Downtime</b>: دايماً فيه Pods شغالة أثناء التبديل.</p>
+  <p>معايير التحكم في السرعة: <code class="inline">maxSurge</code> (كام Pod زيادة يسمح بيهم مؤقتاً) و<code class="inline">maxUnavailable</code> (كام Pod يسمح يكون غير متاح مؤقتاً).</p>
+
+  <h3>Rollback</h3>
+  <p>الـ Deployment بيحتفظ بالـ ReplicaSet القديم (مصفّر العدد لـ 0) بدل ما يمسحه. لو اكتشفت مشكلة في الإصدار الجديد، تقدر ترجع فوراً بأمر واحد من غير إعادة بناء أي حاجة.</p>
+
+  <h3>🔧 Lab عملي: Rolling Update + Rollback</h3>
+  <div class="assign-block">
+    <span class="tag">LAB 3</span>
+
+    <div class="step-label">الخطوة 1: deployment.yaml</div>
+    <pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-nginx-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-nginx
+  template:
+    metadata:
+      labels:
+        app: my-nginx
+    spec:
+      containers:
+        - name: nginx-container
+          image: nginx:1.25
+          ports:
+            - containerPort: 80</code></pre>
+    <div class="note"><b>لاحظ:</b> حددنا <code class="inline">nginx:1.25</code> (إصدار معين) بدل <code class="inline">latest</code>، عشان نقدر نفرّق بصرياً بين النسخة القديمة والجديدة بعد الـ Update.</div>
+
+    <div class="step-label">الخطوة 2: التطبيق والتأكد من السلسلة</div>
+    <pre><code>kubectl apply -f deployment.yaml
+kubectl get deployments
+kubectl get replicasets
+kubectl get pods</code></pre>
+
+    <div class="step-label">الخطوة 3: عمل Rolling Update</div>
+    <pre><code><span class="cmt"># الطريقة 1: تعديل الملف وعمل apply</span>
+kubectl apply -f deployment.yaml
+
+<span class="cmt"># الطريقة 2: أمر مباشر بدون تعديل الملف</span>
+kubectl set image deployment/my-nginx-deployment nginx-container=nginx:1.26</code></pre>
+
+    <div class="step-label">الخطوة 4: مراقبة التقدم لحظياً</div>
+    <pre><code>kubectl rollout status deployment/my-nginx-deployment
+kubectl get replicasets
+<span class="cmt"># هتلاقي صفين: القديم DESIRED=0، والجديد DESIRED=3</span></code></pre>
+
+    <div class="step-label">الخطوة 5: Rollback — تخيل اكتشفنا مشكلة في 1.26</div>
+    <pre><code>kubectl rollout undo deployment/my-nginx-deployment
+kubectl rollout status deployment/my-nginx-deployment
+kubectl get replicasets
+<span class="cmt"># الأرقام بترجع بالعكس: القديم يرجع 3، الجديد يبقى 0</span>
+
+<span class="cmt"># للتأكيد النهائي من الـ image الفعلي الشغال</span>
+kubectl describe deployment my-nginx-deployment | grep Image</code></pre>
+  </div>
+
+  <div class="extra"><b>معلومة إضافية:</b> images رسمية زي nginx مش محتاجة push على Docker Hub لإنها موجودة بالفعل. الـ push بيبقى مطلوب بس لو بنيت custom image بنفسك (<code class="inline">docker build</code> ثم <code class="inline">docker push</code>) وعايز تستخدمه في الـ Cluster.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق الجوهري بين ReplicaSet وDeployment؟", a:"Deployment بيدير ReplicaSet (مش الـ Pods مباشرة)، وبيضيف عليه القدرة على عمل Rolling Update وRollback بأمان. ReplicaSet لوحده بيحافظ على العدد بس."},
+    {q:"إيه اللي بيحصل للـ ReplicaSet القديم بعد Rolling Update ناجح؟", a:"مابيتمسحش، بس بيتصفّر عدد الـ Pods بتاعه لـ 0. ده اللي بيخلي الـ Rollback ممكن يحصل فوراً من غير إعادة بناء."},
+    {q:"إيه الأمر اللي بيرجعك للإصدار السابق فوراً؟", a:"kubectl rollout undo deployment/<اسم الـ deployment>"},
+    {q:"ليه مش محتاجين docker push لو الـ image بتاعنا nginx الرسمي؟", a:"لإنه موجود بالفعل بشكل عام (public) على Docker Hub، والـ kubelet بيقدر يسحبه (pull) مباشرة من غير أي رفع مسبق."},
+    {q:"إيه وظيفة maxSurge وmaxUnavailable؟", a:"بيتحكموا في سرعة وأمان الـ Rolling Update: maxSurge بيحدد كام Pod زيادة مسموح بيهم مؤقتاً، وmaxUnavailable بيحدد كام Pod يسمح يكون غير متاح مؤقتاً أثناء التحديث."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch8", num:"08", title:"Service: العنوان الثابت", navTitle:"Service",
+  lede:"زكا لاحظ إن كل Rolling Update بيغيّر كل الـ IPs. كريم: أهلاً بيك في المشكلة اللي Service جاي يحلها.",
+  body:`
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> طب لو حد عايز يوصل للـ nginx بتاعي، هيكلم مين بالظبط من الـ 3 Pods؟ وكمان الـ IPs بتتغير كل Update!</p>
+    <p><b class="who k">كريم:</b> بالظبط المشكلتين اللي Service بيحلهم: توزيع الطلبات على الـ Pods (Load Balancing)، وعنوان ثابت رغم إن الـ Pods اللي وراه بتتغير طول الوقت (Stable Endpoint).</p>
+  </div>
+
+  <h3>1. إزاي الـ Service بيلاقي الـ Pods؟</h3>
+  <p>بنفس منطق Labels وSelectors اللي اتعلمناه بالظبط. الـ Service بيراقب باستمرار أي Pod عنده الـ label المطلوب، ومش مهم عدد الـ Pods ولا الـ IPs بتاعتها — هو بيحدّث القائمة لوحده تلقائياً. القائمة دي بتتسجل في مورد منفصل اسمه <code class="inline">Endpoints</code>، وتقدر تشوفها بنفسك:</p>
+  <pre><code>kubectl get endpoints
+<span class="cmt"># لو رجع &lt;none&gt; قدام أي Service، معناها الـ selector مش لاقي أي Pod يطابقه</span></code></pre>
+
+  <h3>2. الأنواع الأربعة — من الأبسط للأوسع وصولاً</h3>
+  <p>الأنواع مرتبة هنا حسب "درجة الوصول" — من الأكتر تقييداً (جوه بس) للأكتر انفتاحاً (من الإنترنت). كل نوع بيبني فوق اللي قبله.</p>
+
+  <h4>أ) ClusterIP — الافتراضي، جوه الـ Cluster بس</h4>
+  <p>لو ماحددتش <code class="inline">type</code> خالص، ده اللي بيتستخدم تلقائياً. بيدّي الـ Service عنوان IP داخلي ثابت، لكن العنوان ده <b>مش متاح خالص من برا الـ Cluster</b> — بس الموارد التانية جوه نفس الـ Cluster تقدر توصله.</p>
+  <pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: db-service
+spec:
+  type: ClusterIP   <span class="cmt"># ممكن تسيبها من غير ما تكتبها، هي الافتراضي أصلاً</span>
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432</code></pre>
+  <div class="note"><b>مثال حقيقي على الاستخدام:</b> قاعدة بيانات. مفيش داعي حد من برا الـ Cluster يوصلها مباشرة، بس الـ backend بتاعك (جوه نفس الـ Cluster) محتاج يكلمها.</div>
+
+  <h4>ب) NodePort — أبسط طريقة للوصول من برا</h4>
+  <p>بيعمل كل حاجة اللي ClusterIP بيعملها، <b>+</b> بيفتح نفس الـ port على <b>كل Node</b> في الـ Cluster، فتقدر توصله من برا عن طريق IP بتاع أي Node.</p>
+  <pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: my-nginx-service
+spec:
+  type: NodePort
+  selector:
+    app: my-nginx
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080   <span class="cmt"># اختياري — لو ماحددتوش، Kubernetes هيختار رقم عشوائي بين 30000-32767</span></code></pre>
+
+  <h4>إزاي تحسب العنوان الفعلي لـ NodePort؟</h4>
+  <p>ده أهم جزء عملي محتاج تحفظه:</p>
+  <div class="diagram">
+العنوان الكامل  =  <b>Node IP</b>  :  <b>NodePort</b>
+
+مثال:      minikube ip  →  192.168.49.2
+           NodePort من kubectl get svc  →  31774
+
+           العنوان النهائي: http://192.168.49.2:31774
+  </div>
+  <pre><code><span class="cmt"># اعرف عنوان الـ Node (على minikube)</span>
+minikube ip
+
+<span class="cmt"># اعرف الـ NodePort من عمود PORT(S)</span>
+kubectl get services
+<span class="cmt"># my-nginx-service   NodePort   10.x.x.x   80:31774/TCP</span>
+
+<span class="cmt"># جرب الوصول</span>
+curl http://$(minikube ip):31774</code></pre>
+
+  <div class="warn"><b>سؤال شائع جداً: ليه عمود EXTERNAL-IP فاضي (&lt;none&gt;) مع NodePort؟</b><br>
+  لإن ده طبيعي 100% ومش مشكلة. <code class="inline">NodePort</code> مصمم من الأساس إنه يشتغل على <b>IP بتاع الـ Node نفسه</b>، مش على عنوان خارجي منفصل. عمود <code class="inline">EXTERNAL-IP</code> بيتملى بس مع النوع الجاي (LoadBalancer)، لإن ده النوع الوحيد اللي فعلياً بياخد عنوان خارجي مستقل.</div>
+
+  <h4>ج) LoadBalancer — عنوان خارجي حقيقي (بيئة Cloud)</h4>
+  <p>بيعمل كل حاجة اللي NodePort بيعملها، <b>+</b> بيطلب من الـ cloud provider (AWS, GCP, Azure...) إنه ينشئ Load Balancer حقيقي بعنوان IP عام مستقل، وهو اللي بيظهر في عمود <code class="inline">EXTERNAL-IP</code>.</p>
+  <pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 80</code></pre>
+  <div class="warn"><b>على minikube المحلي:</b> مفيش cloud provider حقيقي، فلو استخدمت LoadBalancer هيفضل الـ EXTERNAL-IP في حالة <code class="inline">&lt;pending&gt;</code> للأبد، إلا لو شغّلت أمر خاص اسمه <code class="inline">minikube tunnel</code> يحاكي وجود Load Balancer محلياً.</div>
+
+  <h4>د) ExternalName — مش Load Balancing خالص، مجرد اسم مستعار</h4>
+  <p>النوع الوحيد اللي بيختلف تماماً عن التلاتة اللي فاتوا. هو مش بيوجّه لـ Pods خالص، هو بس بيعمل "اسم مستعار" (DNS alias) لخدمة خارجية بره الـ Cluster كله.</p>
+  <pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: external-db
+spec:
+  type: ExternalName
+  externalName: db.example.com</code></pre>
+  <p>يعني أي Pod جوه الـ Cluster يكلم <code class="inline">external-db</code>، هيتحول تلقائياً لـ <code class="inline">db.example.com</code> — مفيد لما تستخدم قاعدة بيانات مُدارة (managed) برا الـ Cluster (زي RDS في AWS) بس عايز تناديها باسم داخلي ثابت.</p>
+
+  <h3>3. جدول المقارنة الشامل</h3>
+  <table>
+    <tr><th>النوع</th><th>الوصول من</th><th>EXTERNAL-IP</th><th>مثال استخدام</th></tr>
+    <tr><td><b>ClusterIP</b></td><td>جوه الـ Cluster بس</td><td>دايماً &lt;none&gt;</td><td>قاعدة بيانات داخلية</td></tr>
+    <tr><td><b>NodePort</b></td><td>برا الـ Cluster، عبر Node IP</td><td>دايماً &lt;none&gt; (طبيعي)</td><td>تجربة محلية على minikube</td></tr>
+    <tr><td><b>LoadBalancer</b></td><td>الإنترنت مباشرة</td><td>IP حقيقي (في cloud)</td><td>موقع إنتاج على AWS/GCP</td></tr>
+    <tr><td><b>ExternalName</b></td><td>مش تطبيقي — اسم مستعار بس</td><td>غير منطبق</td><td>الإشارة لخدمة خارجية بـ DNS ثابت</td></tr>
+  </table>
+
+  <h3>4. الطرق البديلة للوصول (من غير NodePort)</h3>
+  <p>فيه طريقتين تانيين مفيدين للتجربة السريعة، من غير ما تعدل نوع الـ Service خالص:</p>
+  <table>
+    <tr><th>الطريقة</th><th>العنوان</th><th>يفضل شغال؟</th></tr>
+    <tr><td><code class="inline">kubectl port-forward</code></td><td>localhost فعلي على جهازك</td><td>بس وقت ما الأمر شغال في terminal</td></tr>
+    <tr><td><code class="inline">minikube service --url</code></td><td>IP بتاع minikube VM</td><td>دايماً، بس محتاج NodePort أصلاً</td></tr>
+  </table>
+  <pre><code><span class="cmt"># بديل سريع لـ localhost من غير NodePort</span>
+kubectl port-forward service/my-nginx-service 8080:80
+<span class="cmt"># بعدها: http://localhost:8080</span></code></pre>
+
+  <h3>🔧 Lab عملي: ربط Service بـ Deployment</h3>
+  <div class="assign-block">
+    <span class="tag">LAB 4</span>
+
+    <div class="step-label">الخطوة 1: service.yaml</div>
+    <pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: my-nginx-service
+spec:
+  type: NodePort
+  selector:
+    app: my-nginx
+  ports:
+    - port: 80
+      targetPort: 80</code></pre>
+
+    <div class="note"><b>لاحظ:</b> <code class="inline">apiVersion: v1</code> مش <code class="inline">apps/v1</code> — لإن Service كائن أساسي زي Pod. و<code class="inline">port</code> هو الرقم اللي أي حد جوه الـ Cluster هيستخدمه، بينما <code class="inline">targetPort</code> هو الرقم اللي الـ container شغال عليه فعلياً (لازم يطابق containerPort بتاع الـ Pod).</div>
+
+    <div class="step-label">الخطوة 2: التطبيق والفحص</div>
+    <pre><code>kubectl apply -f service.yaml
+kubectl get services
+<span class="cmt"># لاحظ عمود PORT(S): زي 80:3XXXX/TCP — الرقم التاني هو الـ NodePort العشوائي</span></code></pre>
+
+    <div class="step-label">الخطوة 3: الوصول من المتصفح عبر minikube</div>
+    <pre><code>minikube service my-nginx-service --url
+<span class="cmt"># هيديك URL كامل زي http://192.168.49.2:3XXXX</span>
+<span class="cmt"># افتحه في المتصفح، المفروض تشوف صفحة "Welcome to nginx!"</span></code></pre>
+  </div>
+  `,
+  qa:[
+    {q:"إيه المشكلتين الأساسيتين اللي Service بيحلهم؟", a:"توزيع الطلبات على أكتر من Pod (Load Balancing)، وعنوان/DNS ثابت للوصول للـ Pods رغم إن IPs بتاعتها بتتغير طول الوقت (Stable Endpoint)."},
+    {q:"إزاي الـ Service بيعرف الـ Pods اللي يوجّه ليها الطلبات؟", a:"بنفس منطق Labels وSelectors — أي Pod عنده label يطابق selector بتاع الـ Service بيتحسب هدف له تلقائياً، والقائمة دي بتتسجل في مورد اسمه Endpoints."},
+    {q:"رتب الأنواع الأربعة من الأكتر تقييداً للأكتر انفتاحاً", a:"ClusterIP (جوه الـ Cluster بس) → NodePort (برا الـ Cluster عبر Node IP) → LoadBalancer (الإنترنت مباشرة عبر IP خارجي). ExternalName نوع مختلف تماماً، بيعمل اسم مستعار لخدمة خارجية بس."},
+    {q:"إزاي تحسب العنوان الفعلي اللي تقدر توصل بيه NodePort من برا؟", a:"Node IP (من كتلة minikube ip مثلاً) + النقطتين + رقم الـ NodePort (من عمود PORT(S) في kubectl get services). مثال: 192.168.49.2:31774"},
+    {q:"ليه عمود EXTERNAL-IP بيفضل <none> مع NodePort؟", a:"لإن ده طبيعي ومقصود — NodePort مصمم إنه يشتغل على IP بتاع الـ Node نفسه، مش على عنوان خارجي منفصل. EXTERNAL-IP بيتملى بس مع type: LoadBalancer."},
+    {q:"إيه الفرق بين LoadBalancer وExternalName؟", a:"LoadBalancer بيوزع طلبات فعلية على Pods عن طريق IP خارجي حقيقي (محتاج cloud provider). ExternalName مش بيعمل أي توزيع أو Load Balancing خالص — هو مجرد اسم مستعار (DNS alias) لخدمة برا الـ Cluster تماماً."},
+    {q:"إيه الفرق بين port وtargetPort في ملف Service؟", a:"port هو الرقم اللي أي حد جوه الـ Cluster هيستخدمه عشان يكلم الـ Service. targetPort هو الرقم الفعلي اللي الـ container شغال عليه جواه."},
+    {q:"إيه نوع الـ Service المناسب لو عايز توصله من برا الـ Cluster وإنت بتجرب على minikube محلياً؟", a:"NodePort — بيفتح port على الـ Node نفسه تقدر توصله من برا. LoadBalancer مش هيشتغل بشكل حقيقي على minikube من غير أمر minikube tunnel."},
+    {q:"ليه apiVersion بتاع Service هو v1 مش apps/v1؟", a:"لإن Service (زي Pod) كائن أساسي (core object) في Kubernetes، بعكس Deployment وReplicaSet اللي جايين من مجموعة apps الأحدث."},
+    {q:"إيه البديل السريع لـ NodePort لو عايز توصل بـ localhost فعلي من غير ما تعدل نوع الـ Service؟", a:"kubectl port-forward service/<اسم السيرفس> <port المحلي>:<port السيرفس> — بس لازم الأمر يفضل شغال في terminal طول ما محتاجه."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch9", num:"09", title:"apiVersion: إزاي تعرف تكتب أي ملف", navTitle:"apiVersion",
+  lede:"زكا: كل مرة بحتار إيه الـ apiVersion الصح؟ فيه طريقة أعرفها من غير ما أحفظ كل حاجة؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> أكيد. متحفظش، افهم القاعدة، والباقي هتلاقيه بالأداة نفسها.</p>
+  </div>
+
+  <h3>القاعدة العامة</h3>
+  <table>
+    <tr><th>apiVersion</th><th>الكائنات اللي بتستخدمه</th></tr>
+    <tr><td><code class="inline">v1</code></td><td>الكائنات الأساسية القديمة: Pod, Service, Namespace</td></tr>
+    <tr><td><code class="inline">apps/v1</code></td><td>الكائنات الأحدث لإدارة التطبيقات: Deployment, ReplicaSet, DaemonSet, StatefulSet</td></tr>
+    <tr><td><code class="inline">networking.k8s.io/v1</code></td><td>موارد الشبكة الحديثة: Ingress</td></tr>
+    <tr><td><code class="inline">rbac.authorization.k8s.io/v1</code></td><td>موارد الصلاحيات: Role, RoleBinding, ClusterRole</td></tr>
+  </table>
+
+  <h3>إزاي تعرف بنفسك بدل ما تحفظ؟</h3>
+  <pre><code><span class="cmt"># يعرض كل أنواع الموارد المتاحة مع الـ apiVersion بتاعها</span>
+kubectl api-resources
+
+<span class="cmt"># يوريك بنية أي كائن بالتفصيل، حقل حقل</span>
+kubectl explain pod
+kubectl explain deployment.spec.strategy</code></pre>
+
+  <div class="note"><b>نصيحة:</b> لما تحتار في اسم حقل معين أو ترتيبه، <code class="inline">kubectl explain</code> بيوريك التوثيق الرسمي مباشرة من جوه الـ Cluster نفسه، أدق من أي مصدر تاني ومتوافق مع نسختك بالظبط.</div>
+  `,
+  qa:[
+    {q:"إيه apiVersion المستخدم للـ Pod؟", a:"v1"},
+    {q:"إيه apiVersion المستخدم للـ Deployment وReplicaSet؟", a:"apps/v1"},
+    {q:"إزاي تعرف كل أنواع الموارد المتاحة في الـ Cluster بتاعك من غير ما تدوّر في التوثيق؟", a:"kubectl api-resources"},
+    {q:"إزاي تعرف بنية حقل معين جوه كائن معين بالتفصيل؟", a:"kubectl explain <kind> أو kubectl explain <kind>.<field>.<subfield>، زي kubectl explain deployment.spec.strategy"}
+  ]
+});
+CHAPTERS.push({
+  id:"ch10", num:"10", title:"ConfigMap و Secret: فصل الإعدادات عن الكود", navTitle:"ConfigMap & Secret",
+  lede:"زكا: لو عايز أغيّر إعداد بسيط زي اسم قاعدة البيانات، لازم أعمل image جديد كل مرة؟!",
+  body:`
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> ده هيبقى تعب، كل تغيير بسيط يعني build وpush جديد؟</p>
+    <p><b class="who k">كريم:</b> لأ طبعاً، ودي بالظبط المشكلة اللي ConfigMap وSecret جايين يحلوها. الفكرة إنك تفصل <b>الإعدادات</b> عن <b>الكود</b> نفسه، وتحقنها جوه الـ container وقت التشغيل، مش وقت البناء.</p>
+  </div>
+
+  <h3>ConfigMap — للإعدادات العادية (غير الحساسة)</h3>
+  <p>مكان تحط فيه قيم زي أسماء الـ hosts، مستويات الـ logging، أو أي إعداد تاني مش سري.</p>
+  <pre><code>apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  APP_MODE: "production"
+  LOG_LEVEL: "info"</code></pre>
+
+  <h3>Secret — للبيانات الحساسة</h3>
+  <p>نفس فكرة ConfigMap تماماً في البنية، لكن مخصص للبيانات الحساسة زي passwords وAPI keys. القيم بتتخزن بصيغة <b>Base64</b> (ده تشفير بسيط للعرض مش تشفير أمني حقيقي، فلازم تتأكد إن الـ Cluster نفسه محمي).</p>
+  <pre><code>apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+type: Opaque
+data:
+  DB_PASSWORD: cGFzc3dvcmQxMjM=   <span class="cmt"># base64 encoded</span></code></pre>
+
+  <div class="warn"><b>تنبيه:</b> Base64 مش تشفير (encryption)، هو ترميز (encoding) بس — أي حد يقدر يفك تشفيره فوراً بأمر <code class="inline">base64 -d</code>. الحماية الحقيقية بتيجي من RBAC (مين مسموحله يشوف الـ Secret أصلاً) ومن تفعيل الـ encryption at rest في etcd.</div>
+
+  <h3>إزاي تستخدمهم جوه الـ Pod؟</h3>
+  <p>أشهر طريقتين: كمتغيرات بيئة (environment variables)، أو كملفات (volume mounts).</p>
+  <pre><code>spec:
+  containers:
+    - name: my-app
+      image: my-app:1.0
+      envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: db-secret</code></pre>
+
+  <div class="note"><b>مهم تلاحظه:</b> لو عدّلت ConfigMap أو Secret، الـ Pods الشغالة بالفعل <b>مش بتتحدث تلقائياً</b> (لو بتستخدمها كـ env vars). محتاج تعمل restart للـ Pods (مثلاً عن طريق <code class="inline">kubectl rollout restart deployment/...</code>) عشان يقروا القيم الجديدة.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق الأساسي بين ConfigMap وSecret؟", a:"نفس البنية تقريباً، لكن ConfigMap للإعدادات العادية غير الحساسة، وSecret مخصص للبيانات الحساسة زي passwords وAPI keys."},
+    {q:"هل Base64 يعتبر تشفير أمني للـ Secret؟", a:"لأ، Base64 هو ترميز (encoding) بس مش تشفير (encryption). أي حد يقدر يفك تشفيره بسهولة، فالحماية الحقيقية لازم تيجي من RBAC ومن تفعيل encryption at rest."},
+    {q:"لو غيّرت قيمة في ConfigMap، هل الـ Pods الشغالة هتاخد القيمة الجديدة تلقائياً؟", a:"لأ، لو بتستخدمها كـ environment variables محتاج تعمل restart للـ Pods (زي kubectl rollout restart) عشان تقرأ القيمة الجديدة."},
+    {q:"اذكر طريقتين لحقن ConfigMap أو Secret جوه Pod", a:"كمتغيرات بيئة (environment variables) عن طريق envFrom، أو كملفات عن طريق volume mounts."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch11", num:"11", title:"Namespace: تقسيم الـ Cluster", navTitle:"Namespace",
+  lede:"زكا: لو فريقين شغالين على نفس الـ Cluster، إزاي أمنع الأسامي تتصادم؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> Namespace بيدّيك "حجرة" منطقية جوه نفس الـ Cluster. تقدر تعمل namespace لكل فريق، أو لكل بيئة (dev, staging, production)، وكل حاجة جوه الـ namespace معزولة اسمياً عن الباقي.</p>
+  </div>
+
+  <h3>ليه محتاجينه؟</h3>
+  <ul>
+    <li>تقدر تعمل Pod اسمه <code class="inline">my-app</code> في namespace <code class="inline">team-a</code>، وPod تاني بنفس الاسم بالظبط في <code class="inline">team-b</code> من غير تعارض.</li>
+    <li>بيسهّل تطبيق RBAC — تقدر تدّي فريق صلاحيات على namespace بتاعه بس (فاكر Role محدود بـ namespace من فصل RBAC؟).</li>
+    <li>بيسهّل تنظيم وتنظيف الموارد — مسح namespace كامل بيمسح كل اللي جواه.</li>
+  </ul>
+
+  <h3>الأوامر الأساسية</h3>
+  <pre><code><span class="cmt"># عرض كل الـ namespaces الموجودة</span>
+kubectl get namespaces
+
+<span class="cmt"># إنشاء namespace جديد</span>
+kubectl create namespace team-a
+
+<span class="cmt"># تطبيق ملف داخل namespace معين</span>
+kubectl apply -f deployment.yaml -n team-a
+
+<span class="cmt"># عرض الـ Pods في namespace معين</span>
+kubectl get pods -n team-a</code></pre>
+
+  <p>أو تحدد الـ namespace جوه الملف نفسه:</p>
+  <pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+  namespace: team-a   <span class="cmt"># هنا</span>
+spec:
+  ...</code></pre>
+
+  <div class="note"><b>ملاحظة:</b> لو ماحددتش namespace، Kubernetes بيستخدم واحد افتراضي اسمه <code class="inline">default</code> — وده اللي كنا شغالين فيه طول اللابات اللي فاتت من غير ما نلاحظ.</div>
+
+  <div class="extra"><b>معلومة إضافية:</b> فيه namespaces جاهزة من Kubernetes نفسه زي <code class="inline">kube-system</code> (فيها مكونات الـ Cluster الداخلية زي kube-proxy وCoreDNS) و<code class="inline">kube-public</code>. متلعبش فيها إلا لو عارف بالظبط بتعمل إيه.</div>
+  `,
+  qa:[
+    {q:"إيه فايدة Namespace الأساسية؟", a:"عزل منطقي للموارد داخل نفس الـ Cluster، بيسمح لفرق أو بيئات مختلفة تستخدم نفس أسامي الموارد من غير تعارض، وبيسهّل تطبيق RBAC والتنظيف."},
+    {q:"لو ماحددتش namespace في أوامرك، فين بتروح الموارد؟", a:"بتروح لـ namespace اسمه default، وهو المستخدم تلقائياً لو مش محدد غيره."},
+    {q:"إزاي تطبّق ملف YAML في namespace معين من سطر الأوامر؟", a:"kubectl apply -f file.yaml -n <اسم النيمسبيس>"},
+    {q:"إيه اللي بيحصل لو مسحت namespace كامل؟", a:"كل الموارد اللي جواه بتتمسح معاه تلقائياً."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch12", num:"12", title:"Storage: لما البيانات لازم تعيش أطول من الـ Pod", navTitle:"PV & PVC",
+  lede:"زكا: لو عندي قاعدة بيانات جوه Pod، ولو الـ Pod مات، البيانات بتضيع معاه؟!",
+  body:`
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> يعني لو الـ Pod اتمسح، البيانات اللي جواه كلها هتروح؟</p>
+    <p><b class="who k">كريم:</b> بالظبط، فاكر إن الـ Pod ephemeral (مؤقت)؟ أي تخزين جواه بشكل افتراضي بيموت معاه. عشان البيانات تعيش أطول من عمر أي Pod معين، محتاجين تخزين خارجي مستقل — ده دور PersistentVolume.</p>
+  </div>
+
+  <h3>PersistentVolume (PV) — المورد الفعلي</h3>
+  <p>قطعة تخزين حقيقية في الـ Cluster (ممكن تكون disk فعلي، أو تخزين سحابي زي EBS في AWS). عادةً بيتعملها الـ admin بتاع الـ Cluster.</p>
+
+  <h3>PersistentVolumeClaim (PVC) — طلب استخدام</h3>
+  <p>هنا بييجي دور Labels/Selectors تاني بشكل غير مباشر: الـ Pod مابيتكلمش مع PV مباشرة، هو بيعمل "طلب" (Claim) بمواصفات معينة (المساحة المطلوبة مثلاً)، وKubernetes بيربطه تلقائياً بـ PV مناسب.</p>
+
+  <div class="diagram">
+Pod  ──uses──►  PersistentVolumeClaim (PVC)  ──bound to──►  PersistentVolume (PV)
+                     "أنا عايز 5GB"                    التخزين الفعلي
+  </div>
+
+  <h3>مثال PVC بسيط</h3>
+  <pre><code>apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-db-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi</code></pre>
+
+  <p>وبعدين تربطه بالـ Pod:</p>
+  <pre><code>spec:
+  containers:
+    - name: db
+      image: postgres:16
+      volumeMounts:
+        - mountPath: "/var/lib/postgresql/data"
+          name: db-storage
+  volumes:
+    - name: db-storage
+      persistentVolumeClaim:
+        claimName: my-db-claim</code></pre>
+
+  <div class="note"><b>ليه ده مهم بالذات مع StatefulSet؟</b> التطبيقات اللي محتاجة تحتفظ بهويتها وبياناتها (زي قواعد البيانات) بتتشغل عادةً عن طريق <code class="inline">StatefulSet</code> بدل Deployment، وده بيوفر لكل نسخة PVC ثابت خاص بيها بدل PVC مشترك.</div>
+  `,
+  qa:[
+    {q:"إيه اللي بيحصل للبيانات جوه Pod عادي لو الـ Pod اتمسح؟", a:"بتضيع، لإن الـ Pod ephemeral والتخزين الافتراضي جواه بيموت معاه — إلا لو مستخدم PersistentVolume."},
+    {q:"إيه الفرق بين PersistentVolume وPersistentVolumeClaim؟", a:"PersistentVolume هو التخزين الفعلي الموجود في الـ Cluster. PersistentVolumeClaim هو طلب من الـ Pod لاستخدام تخزين بمواصفات معينة، وKubernetes بيربطه تلقائياً بـ PV مناسب."},
+    {q:"إزاي الـ Pod بيستخدم PVC فعلياً؟", a:"عن طريق volumes وvolumeMounts في spec بتاع الـ Pod، بيحدد اسم الـ claim والمسار اللي هيتوصل بيه جوه الـ container."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch13", num:"13", title:"Ingress: بوابة واحدة لكل الـ Services", navTitle:"Ingress",
+  lede:"زكا: طب لو عندي 5 تطبيقات مختلفة، هعمل NodePort منفصل لكل واحد فيهم؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> ده هيبقى فوضى، كل تطبيق بـ port مختلف!</p>
+    <p><b class="who k">كريم:</b> بالظبط، وده السبب اللي Ingress اتعمل عشانه. بدل ما تفتح port منفصل لكل Service، بتحط بوابة واحدة بتوجّه الطلبات حسب الـ domain أو الـ path لأي Service مناسب — وكل ده على port 80/443 عادي زي أي موقع.</p>
+  </div>
+
+  <h3>إزاي Ingress شغال؟</h3>
+  <p>فيه مكوّنين لازم يكونوا موجودين مع بعض:</p>
+  <ul>
+    <li><b>Ingress Controller</b> — برنامج فعلي بيشتغل جوه الـ Cluster وينفّذ قواعد التوجيه (زي <code class="inline">nginx-ingress-controller</code> أو <code class="inline">traefik</code>). من غيره، ملفات Ingress مالهاش أي تأثير فعلي.</li>
+    <li><b>Ingress Resource</b> — ملف YAML بيوصف القواعد نفسها (أي domain/path يروح لأنهي Service).</li>
+  </ul>
+
+  <h3>مثال: توجيه حسب الـ path</h3>
+  <pre><code>apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ingress
+spec:
+  rules:
+    - host: myapp.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api-service
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web-service
+                port:
+                  number: 80</code></pre>
+
+  <p>يعني أي طلب لـ <code class="inline">myapp.example.com/api</code> هيروح لـ <code class="inline">api-service</code>، وأي طلب تاني على نفس الـ domain هيروح لـ <code class="inline">web-service</code>.</p>
+
+  <div class="note"><b>Ingress مقابل Service من نوع LoadBalancer:</b> لو عندك Service واحد بس، LoadBalancer كافي. لكن لو عندك أكتر من Service محتاجين يتشاركوا نفس الـ domain بقواعد مختلفة (paths أو subdomains)، Ingress هو الحل الأنسب والأرخص (Load Balancer واحد بره بدل واحد لكل Service).</div>
+
+  <div class="extra"><b>معلومة إضافية:</b> على minikube، تقدر تفعّل Ingress Controller بسهولة بأمر <code class="inline">minikube addons enable ingress</code>.</div>
+  `,
+  qa:[
+    {q:"ليه محتاجين Ingress بدل ما نعمل NodePort لكل Service؟", a:"عشان نتجنب فتح port منفصل لكل تطبيق، وبدلها نستخدم بوابة واحدة بتوجّه الطلبات حسب الـ domain أو الـ path لأي Service مناسب على port عادي (80/443)."},
+    {q:"إيه الفرق بين Ingress Controller وIngress Resource؟", a:"Ingress Controller هو البرنامج الفعلي اللي بينفّذ التوجيه (زي nginx-ingress-controller). Ingress Resource هو ملف YAML بيوصف القواعد بس. من غير Controller، ملف الـ Resource مالوش أي تأثير."},
+    {q:"إمتى تختار Ingress بدل Service من نوع LoadBalancer؟", a:"لما يكون عندك أكتر من Service محتاجين يتشاركوا نفس الـ domain بقواعد مختلفة (زي paths أو subdomains مختلفة)، بدل ما تعمل Load Balancer منفصل ومكلف لكل واحد."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch14", num:"14", title:"Helm: تعبئة تطبيقات Kubernetes", navTitle:"Helm",
+  lede:"زكا: كل مرة عايز أنشر تطبيق، بكتب 5 أو 6 ملفات YAML يدوي. فيه طريقة أسرع؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> اسمه Helm، وبيوصف نفسه إنه "package manager بتاع Kubernetes" — زي ما apt أو npm بيديروا حزم برمجية، Helm بيدير "حزم" كاملة من ملفات Kubernetes.</p>
+  </div>
+
+  <h3>Chart — الوحدة الأساسية في Helm</h3>
+  <p>الـ <b>Chart</b> هو مجموعة ملفات (Deployment, Service, ConfigMap... إلخ) متجمعين مع بعض في حزمة واحدة قابلة لإعادة الاستخدام، فيها متغيرات (values) تقدر تخصصها بدل ما تكرر كتابة نفس الملفات لكل بيئة.</p>
+
+  <h3>الأوامر الأساسية</h3>
+  <pre><code><span class="cmt"># تثبيت تطبيق جاهز من repo عام (مثلاً nginx)</span>
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install my-nginx bitnami/nginx
+
+<span class="cmt"># عرض كل التطبيقات المنشورة عن طريق Helm</span>
+helm list
+
+<span class="cmt"># تحديث تطبيق بقيم جديدة</span>
+helm upgrade my-nginx bitnami/nginx --set replicaCount=5
+
+<span class="cmt"># الرجوع لإصدار سابق (زي Deployment rollback بالظبط لكن على مستوى الحزمة كلها)</span>
+helm rollback my-nginx 1
+
+<span class="cmt"># إزالة التطبيق بالكامل</span>
+helm uninstall my-nginx</code></pre>
+
+  <div class="note"><b>لاحظ التشابه:</b> <code class="inline">helm upgrade</code> و<code class="inline">helm rollback</code> بيطبّقوا نفس فلسفة الـ Rolling Update والـ Rollback اللي اتعلمناها في Deployment، لكن على مستوى تطبيق كامل بكل ملفاته مرة واحدة.</div>
+
+  <h3>ليه Helm مفيد عملياً؟</h3>
+  <ul>
+    <li>بدل كتابة عشرات ملفات YAML يدوي، بتثبت تطبيقات معقدة (زي databases كاملة) بأمر واحد.</li>
+    <li>سهل تخصيص نفس الـ Chart لبيئات مختلفة (dev/staging/production) بمجرد تغيير الـ values.</li>
+    <li>مجتمع ضخم من الـ Charts الجاهزة للتطبيقات الشائعة (databases, monitoring tools, إلخ).</li>
+  </ul>
+
+  <div class="extra"><b>معلومة إضافية:</b> تقدر تعمل Chart خاص بيك لتطبيقك بنفسك بأمر <code class="inline">helm create my-chart</code>، وهو هيولّدلك هيكل مجلدات جاهز تعدّل عليه.</div>
+  `,
+  qa:[
+    {q:"إيه هو Helm ببساطة؟", a:"أداة «package manager» لـ Kubernetes، بتدير مجموعة ملفات YAML مترابطة كحزمة واحدة قابلة لإعادة الاستخدام والتخصيص."},
+    {q:"إيه هو الـ Chart؟", a:"مجموعة ملفات Kubernetes (Deployment, Service, ConfigMap...) متجمعة مع بعض في حزمة واحدة، فيها متغيرات values تقدر تخصصها."},
+    {q:"إيه الأمر اللي بيرجعك لإصدار سابق من تطبيق منشور بـ Helm؟", a:"helm rollback <اسم التطبيق> <رقم الإصدار>"},
+    {q:"إيه الفايدة العملية الأساسية من استخدام Helm بدل كتابة كل ملفات YAML يدوي؟", a:"تثبيت تطبيقات معقدة بأمر واحد، وسهولة تخصيص نفس الإعدادات لبيئات مختلفة من غير تكرار الملفات."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch15", num:"15", title:"الخلاصة والتمرين الشامل", navTitle:"الخلاصة والتمرين",
+  lede:"كريم: خلاص يا زكا، دلوقتي جه دورك تجمع كل حاجة اتعلمناها في تمرين واحد من غير مساعدة.",
+  body:`
+  <h3>خريطة المفاهيم الكاملة</h3>
+  <div class="diagram">
+kubectl  ──►  kube-apiserver  ◄──►  etcd
+                   │  ▲
+                   ▼  │
+         kube-scheduler   kube-controller-manager
+                             │
+                  ┌──────────┴──────────┐
+                  ▼                     ▼
+             kubelet (كل Worker Node)   يدير Reconciliation لكل الموارد
+
+على مستوى الموارد:
+Deployment ──manages──► ReplicaSet ──manages──► Pods ◄──selector── Service
+  </div>
+
+  <h3>ملخص الأربع كائنات</h3>
+  <table>
+    <tr><th>الكائن</th><th>مسؤوليته</th><th>apiVersion</th></tr>
+    <tr><td>Pod</td><td>أصغر وحدة تشغيل، مالوش حماية self-healing لوحده</td><td>v1</td></tr>
+    <tr><td>ReplicaSet</td><td>يحافظ على عدد ثابت من الـ Pods (self-healing)</td><td>apps/v1</td></tr>
+    <tr><td>Deployment</td><td>يدير ReplicaSet + Rolling Update + Rollback</td><td>apps/v1</td></tr>
+    <tr><td>Service</td><td>عنوان ثابت + Load Balancing للـ Pods المتغيرة</td><td>v1</td></tr>
+  </table>
+
+  <div class="note"><b>القاعدة الذهبية اللي ما تنساهاش:</b> كل حاجة في Kubernetes شغالة بمنطق واحد بس مكرر في كل مستوى: <b>desired state</b> بتتقارن مع <b>actual state</b> باستمرار، وأي فرق بيتصلّح تلقائياً. سواء ده على مستوى عدد الـ Pods، أو محتوى الـ image، أو حتى الـ Nodes نفسها.</div>
+
+  <h3>🎯 تمرين شامل نهائي</h3>
+  <div class="assign-block">
+    <span class="tag">التمرين النهائي</span>
+    <p>من غير ما ترجع تنسخ من الفصول اللي فاتت، جرب تعمل الآتي بنفسك في مجلد جديد:</p>
+    <ol>
+      <li>اكتب <code class="inline">deployment.yaml</code> لتطبيق اسمه <code class="inline">web-app</code> بـ 4 replicas، بيستخدم image اسمه <code class="inline">nginx:1.25</code>.</li>
+      <li>طبّقه وتأكد إن السلسلة (Deployment → ReplicaSet → Pods) شغالة صح.</li>
+      <li>اكتب <code class="inline">service.yaml</code> من نوع <code class="inline">NodePort</code> يربط بالـ Pods دي، ويسمع على port 80.</li>
+      <li>اعمل Rolling Update للإصدار <code class="inline">nginx:1.26</code>، وراقب الـ rollout لحظياً.</li>
+      <li>اكتشفت "مشكلة" في النسخة الجديدة — ارجع فوراً للإصدار القديم بأمر واحد.</li>
+      <li>امسح Pod واحد يدوياً من الـ 4، وأثبت إن النظام رجّعه تلقائياً.</li>
+    </ol>
+    <div class="warn"><b>تحدي إضافي:</b> اعمل Role اسمه <code class="inline">web-app-viewer</code> يسمح بالقراءة بس (get, list, watch) على Pods وServices في namespace اسمه default، واربطه بـ ServiceAccount جديد عن طريق RoleBinding.</div>
+  </div>
+
+  <h3>إيه اللي فاتنا (للاستكشاف لاحقاً)</h3>
+  <p>كل اللي جاي هنا اتغطى بالفعل في الفصول 10 لـ 14 (<code class="inline">ConfigMap</code>/<code class="inline">Secret</code>, <code class="inline">Namespace</code>, <code class="inline">PersistentVolume</code>, <code class="inline">Ingress</code>, <code class="inline">Helm</code>). اللي لسه فاضل بره منهجنا:</p>
+  <ul>
+    <li><b>DaemonSet &amp; StatefulSet</b> — أنواع controllers متخصصة لحالات خاصة (تطبيق على كل Node، أو تطبيقات محتاجة هوية ثابتة زي قواعد البيانات).</li>
+    <li><b>Job &amp; CronJob</b> — لتشغيل مهام تنتهي (batch jobs) بدل تطبيقات دايماً شغالة.</li>
+    <li><b>Horizontal Pod Autoscaler (HPA)</b> — زيادة/تقليل عدد الـ Pods تلقائياً حسب الحمل.</li>
+    <li><b>NetworkPolicy</b> — التحكم في مين مسموحله يكلم مين على مستوى الشبكة.</li>
+    <li><b>Operators &amp; CRDs</b> — توسيع Kubernetes نفسه بموارد وmanager مخصصين.</li>
+    <li><b>Monitoring &amp; GitOps</b> — أدوات زي Prometheus/Grafana وArgoCD في بيئات الإنتاج.</li>
+  </ul>
+
+  <div class="extra"><b>كلمة كريم الأخيرة:</b> Kubernetes مش شغلانة تتحفظ، هي طريقة تفكير. لو فاهم الـ Reconciliation Loop والعلاقة بين الكائنات، أي مصدر جديد هتقابله (زي StatefulSet أو Job) هتفهمه بسرعة لإنه بيطبّق نفس الفلسفة.</div>
+  `,
+  qa:[
+    {q:"إيه المنطق الواحد اللي كل مكونات Kubernetes مبنية عليه؟", a:"مقارنة مستمرة بين Desired State وActual State، وتصحيح أي فرق تلقائياً — ده اسمه Reconciliation Loop، وبيتكرر على كل مستوى (Pods، Nodes، حتى محتوى الـ image عبر Deployment)."},
+    {q:"رتب السلسلة الصحيحة من الأعلى للأسفل: Pods، Deployment، ReplicaSet", a:"Deployment يدير ReplicaSet، وReplicaSet يدير Pods."},
+    {q:"إيه الكائن المسؤول عن عنوان ثابت للوصول لمجموعة Pods متغيرة؟", a:"Service"},
+    {q:"لو محتاج تخزن بيانات حساسة زي password بشكل منفصل عن الـ image، أنهي كائن تستخدم (من اللي اتذكروا في نهاية الفصل)؟", a:"Secret"}
+  ]
+});
+CHAPTERS.push({
+  id:"ch16", num:"16", title:"مرجع kubectl الشامل: كل الأوامر في مكان واحد", navTitle:"مرجع أوامر kubectl",
+  lede:"زكا: كل الأوامر اللي استخدمناها في الكورس كانت متفرقة في كل فصل. عايز مرجع واحد أرجعله بسرعة وقت الحاجة.",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> فكرة ممتازة. ده مش فصل تعليمي جديد، ده "دفتر مرجعي" (Cheat Sheet) تفتحه وتدور فيه بالـ Search بتاع الموقع وقت ما تنسى صيغة أمر معين.</p>
+  </div>
+
+  <h3>1. أساسيات الاتصال والمعلومات العامة</h3>
+  <pre><code><span class="cmt"># معلومات الـ Cluster الحالي</span>
+kubectl cluster-info
+kubectl version
+
+<span class="cmt"># عرض الـ Nodes وحالتها</span>
+kubectl get nodes
+kubectl describe node &lt;node-name&gt;
+
+<span class="cmt"># عرض كل أنواع الموارد المتاحة</span>
+kubectl api-resources
+
+<span class="cmt"># بنية أي كائن بالتفصيل</span>
+kubectl explain &lt;kind&gt;
+kubectl explain deployment.spec.strategy</code></pre>
+
+  <h3>2. Pods</h3>
+  <pre><code><span class="cmt"># عرض</span>
+kubectl get pods
+kubectl get pods -o wide              <span class="cmt"># تفاصيل أكتر (IP, Node)</span>
+kubectl get pods -n &lt;namespace&gt;
+kubectl get pods --all-namespaces
+kubectl get pods -w                    <span class="cmt"># مراقبة حية (watch)</span>
+kubectl get pods -l app=my-nginx       <span class="cmt"># فلترة بـ label</span>
+
+<span class="cmt"># تفاصيل ومراقبة</span>
+kubectl describe pod &lt;pod-name&gt;
+kubectl logs &lt;pod-name&gt;
+kubectl logs &lt;pod-name&gt; --follow       <span class="cmt"># مراقبة حية للـ logs</span>
+kubectl logs &lt;pod-name&gt; -c &lt;container-name&gt;   <span class="cmt"># لو فيه أكتر من container</span>
+
+<span class="cmt"># تنفيذ أوامر جوه الـ Pod</span>
+kubectl exec -it &lt;pod-name&gt; -- /bin/bash
+kubectl exec -it &lt;pod-name&gt; -- ls /app
+
+<span class="cmt"># إنشاء ومسح</span>
+kubectl apply -f pod.yaml
+kubectl delete pod &lt;pod-name&gt;
+kubectl delete -f pod.yaml</code></pre>
+
+  <h3>3. ReplicaSet & Deployment</h3>
+  <pre><code><span class="cmt"># عرض</span>
+kubectl get replicasets
+kubectl get deployments
+kubectl get rs                          <span class="cmt"># اختصار replicasets</span>
+kubectl get deploy                      <span class="cmt"># اختصار deployments</span>
+
+<span class="cmt"># إنشاء سريع بدون YAML</span>
+kubectl create deployment my-app --image=nginx
+
+<span class="cmt"># تطبيق ومسح</span>
+kubectl apply -f deployment.yaml
+kubectl delete deployment &lt;name&gt;
+
+<span class="cmt"># Rolling Update</span>
+kubectl set image deployment/my-app container-name=nginx:1.26
+kubectl rollout status deployment/my-app
+
+<span class="cmt"># Rollback</span>
+kubectl rollout undo deployment/my-app
+kubectl rollout undo deployment/my-app --to-revision=2
+kubectl rollout history deployment/my-app
+
+<span class="cmt"># Restart بدون تغيير أي إعداد (مفيد بعد تعديل ConfigMap/Secret)</span>
+kubectl rollout restart deployment/my-app
+
+<span class="cmt"># Scaling يدوي</span>
+kubectl scale deployment my-app --replicas=5</code></pre>
+
+  <h3>4. Service</h3>
+  <pre><code><span class="cmt"># عرض</span>
+kubectl get services
+kubectl get svc                         <span class="cmt"># اختصار</span>
+kubectl get endpoints                   <span class="cmt"># تأكد إن الـ selector لاقي Pods فعلاً</span>
+
+<span class="cmt"># عرض سريع بدون YAML</span>
+kubectl expose deployment my-app --port=80 --type=NodePort
+
+<span class="cmt"># الوصول من برا (minikube)</span>
+minikube service my-service --url
+minikube ip
+
+<span class="cmt"># Port forwarding مباشر لـ localhost</span>
+kubectl port-forward service/my-service 8080:80
+kubectl port-forward pod/my-pod 8080:80</code></pre>
+
+  <h3>5. Namespace</h3>
+  <pre><code>kubectl get namespaces
+kubectl create namespace &lt;name&gt;
+kubectl delete namespace &lt;name&gt;
+kubectl apply -f file.yaml -n &lt;namespace&gt;
+kubectl config set-context --current --namespace=&lt;name&gt;   <span class="cmt"># تغيير الافتراضي</span></code></pre>
+
+  <h3>6. ConfigMap & Secret</h3>
+  <pre><code><span class="cmt"># عرض</span>
+kubectl get configmaps
+kubectl get secrets
+kubectl describe configmap &lt;name&gt;
+
+<span class="cmt"># إنشاء سريع بدون YAML</span>
+kubectl create configmap my-config --from-literal=KEY=value
+kubectl create secret generic my-secret --from-literal=PASSWORD=12345
+
+<span class="cmt"># قراءة قيمة Secret (فك Base64)</span>
+kubectl get secret my-secret -o jsonpath='{.data.PASSWORD}' | base64 -d</code></pre>
+
+  <h3>7. Ingress</h3>
+  <pre><code>kubectl get ingress
+kubectl describe ingress &lt;name&gt;
+kubectl apply -f ingress.yaml
+minikube addons enable ingress
+kubectl get pods -n ingress-nginx</code></pre>
+
+  <h3>8. Storage (PV & PVC)</h3>
+  <pre><code>kubectl get pv
+kubectl get pvc
+kubectl describe pvc &lt;name&gt;</code></pre>
+
+  <h3>9. RBAC</h3>
+  <pre><code>kubectl get roles -n &lt;namespace&gt;
+kubectl get rolebindings -n &lt;namespace&gt;
+kubectl get clusterroles
+kubectl auth can-i create pods              <span class="cmt"># هل أنا مسموحلي أعمل ده؟</span>
+kubectl auth can-i create pods --as=&lt;user&gt;   <span class="cmt"># هل مستخدم تاني مسموحله؟</span></code></pre>
+
+  <h3>10. التشخيص والـ Debugging</h3>
+  <pre><code><span class="cmt"># الأهم على الإطلاق وقت المشاكل</span>
+kubectl describe pod &lt;pod-name&gt;     <span class="cmt"># شوف قسم Events في الآخر دايماً</span>
+kubectl get events --sort-by='.lastTimestamp'
+kubectl get events -n &lt;namespace&gt; --sort-by='.lastTimestamp'
+
+<span class="cmt"># استخدام الموارد (محتاج metrics-server)</span>
+kubectl top nodes
+kubectl top pods
+
+<span class="cmt"># نسخ ملفات من/لـ Pod</span>
+kubectl cp &lt;pod-name&gt;:/path/to/file ./local-file
+kubectl cp ./local-file &lt;pod-name&gt;:/path/to/file</code></pre>
+
+  <h3>11. Helm</h3>
+  <pre><code>helm repo add &lt;repo-name&gt; &lt;repo-url&gt;
+helm install &lt;release-name&gt; &lt;chart&gt;
+helm list
+helm upgrade &lt;release-name&gt; &lt;chart&gt; --set key=value
+helm rollback &lt;release-name&gt; &lt;revision&gt;
+helm uninstall &lt;release-name&gt;</code></pre>
+
+  <h3>12. Context وConfig (لو شغال على أكتر من Cluster)</h3>
+  <pre><code>kubectl config get-contexts
+kubectl config current-context
+kubectl config use-context &lt;context-name&gt;</code></pre>
+
+  <div class="warn"><b>تحذير عام مهم:</b> أوامر <code class="inline">kubectl delete</code> و<code class="inline">kubectl apply</code> على بيئة إنتاج (production) لازم تتأكد منها 100% قبل التنفيذ — خصوصاً لو مادّيتش <code class="inline">-n</code> صراحة، الأمر هيشتغل على الـ namespace الافتراضي اللي إنت واقف عليه، مش بالضرورة اللي في دماغك.</div>
+
+  <h3>جدول اختصارات الأسماء الشائعة (Aliases)</h3>
+  <table>
+    <tr><th>الاسم الكامل</th><th>الاختصار</th></tr>
+    <tr><td>pods</td><td>po</td></tr>
+    <tr><td>deployments</td><td>deploy</td></tr>
+    <tr><td>replicasets</td><td>rs</td></tr>
+    <tr><td>services</td><td>svc</td></tr>
+    <tr><td>namespaces</td><td>ns</td></tr>
+    <tr><td>configmaps</td><td>cm</td></tr>
+    <tr><td>persistentvolumeclaims</td><td>pvc</td></tr>
+    <tr><td>persistentvolumes</td><td>pv</td></tr>
+    <tr><td>nodes</td><td>no</td></tr>
+    <tr><td>ingress</td><td>ing</td></tr>
+  </table>
+
+  <div class="extra"><b>معلومة إضافية:</b> تقدر تضيف <code class="inline">--dry-run=client -o yaml</code> لأي أمر <code class="inline">kubectl create</code> عشان يوريك الملف الـ YAML الناتج من غير ما ينفذه فعلياً — طريقة ممتازة تولّد بيها ملفات YAML أساسية بسرعة بدل ما تكتبها من الصفر.</div>
+  <pre><code><span class="cmt"># مثال: توليد YAML بدل ما تكتبه يدوي</span>
+kubectl create deployment my-app --image=nginx --dry-run=client -o yaml > deployment.yaml</code></pre>
+  `,
+  qa:[
+    {q:"إيه الفرق بين kubectl get pods وkubectl get pods -o wide؟", a:"الأمر العادي بيوري معلومات أساسية بس. -o wide بيضيف تفاصيل أكتر زي IP بتاع الـ Pod وأنهي Node شغال عليه."},
+    {q:"إزاي تولّد ملف YAML أساسي بسرعة من غير ما تنفذ الأمر فعلياً؟", a:"بإضافة --dry-run=client -o yaml لأي أمر kubectl create، زي: kubectl create deployment my-app --image=nginx --dry-run=client -o yaml"},
+    {q:"إيه الأمر اللي بيتأكد لو مستخدم معين مسموحله يعمل action معين؟", a:"kubectl auth can-i <action> <resource> --as=<user>، زي kubectl auth can-i create pods --as=zekaa"},
+    {q:"إيه أهم قسم تركز عليه لما تعمل kubectl describe pod وقت التشخيص؟", a:"قسم Events في آخر الناتج — بيوضح تسلسل الأحداث والأخطاء الفعلية اللي حصلت للـ Pod."},
+    {q:"إيه الأمر اللي بيوريك استخدام الموارد الفعلي (CPU/Memory) للـ Pods، ومحتاج إيه عشان يشتغل؟", a:"kubectl top pods، ومحتاج metrics-server مثبت في الـ Cluster عشان يشتغل."}
+  ]
+});
+
+/* ============ END DATA ============ */
+
+/* ---------- Rendering ---------- */
+const navContainer = document.getElementById('navContainer');
+const chaptersEl = document.getElementById('content').querySelector('#chapters');
+
+function escId(s){ return s.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g,'-'); }
+
+function renderNav(){
+  let html = '<div class="nav-group-label">المحتويات</div>';
+  html += `<a class="nav-link" data-target="intro" href="#intro"><span class="n">00</span><span>البداية</span></a>`;
+  CHAPTERS.forEach(ch=>{
+    html += `<a class="nav-link" data-target="${ch.id}" href="#${ch.id}"><span class="n">${ch.num}</span><span>${ch.navTitle||ch.title}</span></a>`;
+  });
+  navContainer.innerHTML = html;
+}
+
+function renderChapters(){
+  let html = '';
+  CHAPTERS.forEach(ch=>{
+    html += `<section class="chapter" id="${ch.id}">
+      <div class="chapter-head"><span class="chapter-num">${ch.num}</span><h2>${ch.title}</h2></div>
+      ${ch.lede ? `<div class="lede">${ch.lede}</div>` : ''}
+      <div class="chapter-body">${ch.body}</div>`;
+
+    if(ch.qa && ch.qa.length){
+      html += `<div class="qa-title"><h3>🧠 أسئلة وأجوبة</h3><span class="qa-badge">${ch.qa.length} سؤال</span></div>`;
+      ch.qa.forEach(item=>{
+        html += `<details class="qa"><summary>${item.q}</summary><div class="qa-body">${item.a}</div></details>`;
+      });
+    }
+    html += `</section>`;
+  });
+  chaptersEl.innerHTML = html;
+}
+
+renderNav();
+renderChapters();
+
+/* ---------- Copy buttons for code blocks ---------- */
+document.querySelectorAll('pre').forEach(pre=>{
+  const codeEl = pre.querySelector('code');
+  const btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'نسخ';
+  btn.onclick = ()=>{
+    const text = codeEl ? codeEl.innerText : pre.innerText;
+    navigator.clipboard.writeText(text.trim());
+    btn.textContent = 'اتنسخ ✓';
+    setTimeout(()=>btn.textContent='نسخ', 1400);
+  };
+  pre.appendChild(btn);
+});
+
+/* ---------- Scroll spy ---------- */
+const navLinks = [...document.querySelectorAll('.nav-link')];
+const sections = [document.getElementById('intro'), ...CHAPTERS.map(c=>document.getElementById(c.id))];
+const pathCurrent = document.getElementById('pathCurrent');
+const progressLabel = document.getElementById('progressLabel');
+
+function onScroll(){
+  let currentId = 'intro';
+  for(const sec of sections){
+    if(!sec) continue;
+    const rect = sec.getBoundingClientRect();
+    if(rect.top <= 140) currentId = sec.id;
+  }
+  navLinks.forEach(l=>l.classList.toggle('active', l.dataset.target===currentId));
+  pathCurrent.textContent = currentId;
+  const idx = sections.findIndex(s=>s && s.id===currentId);
+  progressLabel.textContent = `${idx+1} / ${sections.length}`;
+}
+document.addEventListener('scroll', onScroll, {passive:true});
+onScroll();
+
+/* ---------- Mobile menu ---------- */
+const sidebar = document.getElementById('sidebar');
+document.getElementById('menuBtn').onclick = ()=> sidebar.classList.toggle('open');
+navLinks.forEach(l=> l.addEventListener('click', ()=> sidebar.classList.remove('open')));
+
+/* ---------- Search ---------- */
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('input', ()=>{
+  const q = searchInput.value.trim();
+  if(!q){
+    navLinks.forEach(l=>l.classList.remove('hidden'));
+    return;
+  }
+  navLinks.forEach(l=>{
+    const target = l.dataset.target;
+    const sec = document.getElementById(target);
+    const text = (sec ? sec.innerText : l.innerText);
+    l.classList.toggle('hidden', !text.includes(q));
+  });
+});
+</script>
+</body>
+</html>

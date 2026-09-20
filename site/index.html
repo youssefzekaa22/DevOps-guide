@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>أكاديمية زيكا  : كل الكورسات في مكان واحد</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800;900&family=Tajawal:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#11151b; --bg-alt:#161b22; --panel:#1a212b; --panel-2:#1f2731;
+    --border:#2a323d; --amber:#4f9fe8; --amber-dim:#2f628a; --teal:#5cb8a6;
+    --text:#e9e7de; --text-dim:#96a0af; --text-faint:#5c6675;
+    --serif-ar:'Cairo',sans-serif; --body-ar:'Tajawal',sans-serif; --mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:var(--body-ar); line-height:1.85;}
+  .wrap{max-width:1100px; margin:0 auto; padding:60px 30px 100px;}
+  .eyebrow{font-family:var(--mono); color:var(--amber); font-size:.85rem; margin-bottom:16px; direction:ltr; text-align:right;}
+  h1{font-family:var(--serif-ar); font-size:2.8rem; font-weight:900; margin:0 0 14px;}
+  h1 em{color:var(--amber); font-style:normal;}
+  .lede{color:var(--text-dim); font-size:1.1rem; max-width:640px; margin:0 0 50px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:22px;}
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:28px 26px; text-decoration:none; color:var(--text); display:block;
+    transition:transform .15s, border-color .15s;
+  }
+  .card:hover{transform:translateY(-4px); border-color:var(--amber-dim);}
+  .card .icon{font-size:2.2rem; margin-bottom:16px; display:block;}
+  .card h2{font-family:var(--serif-ar); font-size:1.35rem; margin:0 0 10px;}
+  .card p{color:var(--text-dim); font-size:.92rem; margin:0 0 16px;}
+  .card .meta{font-family:var(--mono); font-size:.72rem; color:var(--amber); display:flex; gap:14px;}
+  footer{text-align:center; color:var(--text-faint); font-size:.85rem; margin-top:70px; font-family:var(--mono);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">$ ls ~/zeeka-academy/courses</div>
+  <h1>أكاديمية <em>زيكا</em>: كل الكورسات في مكان واحد</h1>
+  <p class="lede">خمس كورسات كاملة من الصفر للاحتراف، بنفس أسلوب الحكاية والحوار. اختر الكورس اللي عايز تبدأ فيه.</p>
+
+  <div class="grid">
+    <a class="card" href="./kubernetes.html">
+      <span class="icon">☸️</span>
+      <h2>Kubernetes الأساسيات</h2>
+      <p>من الصفر: Architecture, RBAC, Pod, Deployment, Service, Ingress, Helm.</p>
+      <div class="meta"><span>16 فصل</span><span>4 Labs</span></div>
+    </a>
+
+    <a class="card" href="./kubernetes-advanced.html">
+      <span class="icon">⚙️</span>
+      <h2>Kubernetes المتقدم</h2>
+      <p>DaemonSet, StatefulSet, HPA, NetworkPolicy, Operators, Monitoring, GitOps.</p>
+      <div class="meta"><span>11 فصل</span></div>
+    </a>
+
+    <a class="card" href="./networking.html">
+      <span class="icon">🌐</span>
+      <h2>Networking</h2>
+      <p>OSI Model, TCP/IP, Subnetting, Routing, DNS, Firewalls, VPN.</p>
+      <div class="meta"><span>14 فصل</span></div>
+    </a>
+
+    <a class="card" href="./git.html">
+      <span class="icon">📚</span>
+      <h2>Git</h2>
+      <p>من الأساسيات لحد Rebase وWorkflows الفرق الاحترافية.</p>
+      <div class="meta"><span>13 فصل</span></div>
+    </a>
+
+    <a class="card" href="./linux.html">
+      <span class="icon">🐧</span>
+      <h2>Linux</h2>
+      <p>من الصفر للاحتراف: الأوامر الأساسية، الصلاحيات، العمليات، والإدارة الكاملة للنظام.</p>
+      <div class="meta"><span>25 فصل</span><span>40 تمرين محلول</span></div>
+    </a>
+  </div>
+
+  <footer>$ kubectl get courses --all-namespaces — Zeeka Academy</footer>
+</div>
+</body>
+</html>

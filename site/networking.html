@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Networking: حكاية زكا وكريم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800;900&family=Tajawal:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#11151b;
+    --bg-alt:#161b22;
+    --panel:#1a212b;
+    --panel-2:#1f2731;
+    --border:#2a323d;
+    --amber:#4f9fe8;
+    --amber-dim:#2f628a;
+    --teal:#5cb8a6;
+    --text:#e9e7de;
+    --text-dim:#96a0af;
+    --text-faint:#5c6675;
+    --danger:#d9695f;
+    --radius:10px;
+    --serif-ar:'Cairo',sans-serif;
+    --body-ar:'Tajawal',sans-serif;
+    --mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--body-ar);
+    line-height:1.85;
+    font-size:16.5px;
+  }
+  ::selection{background:var(--amber);color:#141821;}
+
+  /* ---------- Layout ---------- */
+  .app{display:flex; min-height:100vh;}
+  .sidebar{
+    width:300px; flex-shrink:0;
+    background:var(--bg-alt);
+    border-left:1px solid var(--border);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:22px 18px 60px;
+  }
+  .sidebar::-webkit-scrollbar{width:8px;}
+  .sidebar::-webkit-scrollbar-thumb{background:var(--panel-2); border-radius:8px;}
+
+  .brand{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--amber); box-shadow:0 0 10px var(--amber);}
+  .brand-title{font-family:var(--serif-ar); font-weight:900; font-size:1.15rem; color:var(--text);}
+  .brand-sub{font-family:var(--mono); font-size:.72rem; color:var(--text-faint); margin:2px 0 18px; letter-spacing:.3px;}
+
+  .search-box{position:relative; margin-bottom:16px;}
+  .search-box input{
+    width:100%; background:var(--panel); border:1px solid var(--border); color:var(--text);
+    padding:10px 14px; border-radius:8px; font-family:var(--body-ar); font-size:.85rem;
+  }
+  .search-box input:focus{outline:none; border-color:var(--amber-dim);}
+  .search-box input::placeholder{color:var(--text-faint);}
+
+  .nav-group-label{
+    font-family:var(--mono); font-size:.68rem; color:var(--text-faint);
+    text-transform:uppercase; letter-spacing:1px; margin:18px 4px 8px;
+  }
+  .nav-link{
+    display:flex; align-items:baseline; gap:8px;
+    padding:8px 10px; border-radius:8px; color:var(--text-dim);
+    text-decoration:none; font-size:.88rem; cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .nav-link .n{font-family:var(--mono); color:var(--text-faint); font-size:.72rem; min-width:20px;}
+  .nav-link:hover{background:var(--panel); color:var(--text);}
+  .nav-link.active{background:var(--panel-2); color:var(--amber); font-weight:600;}
+  .nav-link.hidden{display:none;}
+
+  .main{flex:1; min-width:0;}
+  .topbar{
+    position:sticky; top:0; z-index:5;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 34px; background:rgba(17,21,27,.85); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);
+  }
+  .topbar .path{font-family:var(--mono); font-size:.78rem; color:var(--text-faint); direction:ltr; unicode-bidi:isolate;}
+  .topbar .path span{color:var(--amber);}
+  #progressLabel{direction:ltr; unicode-bidi:isolate;}
+  .menu-btn{display:none; background:none; border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:8px; cursor:pointer; font-size:1.1rem;}
+
+  .content{max-width:880px; margin:0 auto; padding:50px 34px 140px;}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:40px 0 60px; border-bottom:1px solid var(--border); margin-bottom:50px;}
+  .hero .eyebrow{font-family:var(--mono); color:var(--amber); font-size:.82rem; letter-spacing:.5px; margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+  .hero h1{font-family:var(--serif-ar); font-size:2.6rem; font-weight:900; margin:0 0 16px; line-height:1.3;}
+  .hero h1 em{color:var(--amber); font-style:normal;}
+  .hero p{color:var(--text-dim); font-size:1.05rem; max-width:640px; margin:0 0 26px;}
+  .terminal{
+    background:#0d1116; border:1px solid var(--border); border-radius:12px;
+    padding:20px 22px; font-family:var(--mono); font-size:.86rem; color:#c9d1d9;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
+    direction:ltr; text-align:left; unicode-bidi:isolate;
+  }
+  .terminal .tbar{display:flex; gap:6px; margin-bottom:14px;}
+  .terminal .tbar span{width:11px;height:11px;border-radius:50%; display:inline-block;}
+  .terminal .tbar span:nth-child(1){background:#d9695f;}
+  .terminal .tbar span:nth-child(2){background:#e6a83d;}
+  .terminal .tbar span:nth-child(3){background:#5cb8a6;}
+  .terminal .line{margin:0 0 6px;}
+  .terminal .prompt{color:var(--teal);}
+  .terminal .cmd{color:#e9e7de;}
+  .terminal .out{color:var(--text-faint);}
+  .caret{display:inline-block; width:7px; height:1em; background:var(--amber); vertical-align:middle; animation:blink 1s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+
+  .stat-row{display:flex; gap:28px; margin-top:32px; flex-wrap:wrap;}
+  .stat{}
+  .stat b{font-family:var(--serif-ar); font-size:1.6rem; color:var(--amber); display:block;}
+  .stat span{font-size:.78rem; color:var(--text-faint);}
+
+  /* ---------- Chapter ---------- */
+  .chapter{margin-bottom:70px; scroll-margin-top:90px;}
+  .chapter-head{display:flex; align-items:center; gap:14px; margin-bottom:6px;}
+  .chapter-num{
+    font-family:var(--mono); color:var(--amber); border:1px solid var(--amber-dim);
+    border-radius:6px; padding:2px 9px; font-size:.78rem;
+  }
+  .chapter h2{font-family:var(--serif-ar); font-size:1.9rem; font-weight:800; margin:0;}
+  .chapter .lede{color:var(--text-dim); font-size:.98rem; margin:10px 0 28px; border-right:3px solid var(--amber-dim); padding-right:16px;}
+
+  .dialogue{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px 22px; margin:18px 0;}
+  .dialogue p{margin:0 0 12px;}
+  .dialogue p:last-child{margin-bottom:0;}
+  .dialogue b.who{color:var(--amber); font-family:var(--body-ar); font-weight:700;}
+  .dialogue b.who.k{color:var(--teal);}
+
+  .content h3{font-family:var(--serif-ar); font-size:1.25rem; font-weight:700; margin:32px 0 12px; color:var(--text);}
+  .content h4{font-family:var(--serif-ar); font-size:1.05rem; font-weight:700; margin:22px 0 10px; color:var(--amber);}
+  .content p{margin:0 0 14px; color:#d8d6cd;}
+  .content ul, .content ol{margin:0 0 16px; padding-right:22px; color:#d8d6cd;}
+  .content li{margin-bottom:6px;}
+
+  pre{
+    background:#0d1116; border:1px solid var(--border); border-radius:10px;
+    padding:40px 18px 16px; overflow-x:auto; margin:14px 0 20px; position:relative;
+    direction:ltr; text-align:left;
+  }
+  pre code{font-family:var(--mono); font-size:.84rem; color:#c9d1d9; line-height:1.7; white-space:pre;}
+  .cmt{color:#6b7684;}
+  .copy-btn{
+    position:absolute; left:10px; top:10px; background:var(--panel-2); border:1px solid var(--border);
+    color:var(--text-dim); font-size:.68rem; padding:4px 10px; border-radius:6px; cursor:pointer;
+    font-family:var(--body-ar); direction:rtl; z-index:2; line-height:1.4;
+  }
+  .copy-btn:hover{color:var(--amber); border-color:var(--amber-dim);}
+
+  table{width:100%; border-collapse:collapse; margin:16px 0 22px; font-size:.9rem;}
+  th, td{border:1px solid var(--border); padding:9px 12px; text-align:right;}
+  th{background:var(--panel); color:var(--amber); font-family:var(--body-ar); font-weight:700;}
+  td{color:#d8d6cd;}
+  tr:nth-child(even) td{background:rgba(255,255,255,.015);}
+  code.inline{background:var(--panel-2); border:1px solid var(--border); border-radius:5px; padding:1px 7px; font-family:var(--mono); font-size:.82em; color:var(--amber); direction:ltr; unicode-bidi:isolate; display:inline-block;}
+
+  .note{background:rgba(79,159,232,.08); border:1px solid var(--amber-dim); border-radius:10px; padding:14px 18px; margin:18px 0; font-size:.92rem;}
+  .note b{color:var(--amber);}
+  .warn{background:rgba(217,105,95,.08); border:1px solid #6b3a35; border-radius:10px; padding:14px 18px; margin:18px 0; font-size:.92rem;}
+  .warn b{color:var(--danger);}
+  .extra{background:rgba(92,184,166,.07); border:1px solid #2f5951; border-radius:10px; padding:14px 18px; margin:18px 0; font-size:.92rem;}
+  .extra b{color:var(--teal);}
+
+  .diagram{
+    background:#0d1116; border:1px solid var(--border); border-radius:10px; padding:18px;
+    font-family:var(--mono); font-size:.82rem; color:#c9d1d9; overflow-x:auto; direction:ltr; text-align:left; margin:16px 0 22px;
+  }
+
+  /* ---------- Q&A ---------- */
+  .qa-title{display:flex; align-items:center; gap:10px; margin:36px 0 14px;}
+  .qa-title h3{margin:0;}
+  .qa-badge{font-family:var(--mono); font-size:.68rem; color:var(--bg); background:var(--amber); padding:2px 8px; border-radius:20px; font-weight:700;}
+  details.qa{
+    background:var(--panel); border:1px solid var(--border); border-radius:9px;
+    margin-bottom:10px; overflow:hidden;
+  }
+  details.qa summary{
+    list-style:none; cursor:pointer; padding:13px 18px; font-weight:600; color:var(--text);
+    display:flex; align-items:center; gap:10px; font-size:.94rem;
+  }
+  details.qa summary::-webkit-details-marker{display:none;}
+  details.qa summary::before{
+    content:"›"; color:var(--amber); font-family:var(--mono); font-size:1.1rem;
+    transition:transform .18s; display:inline-block;
+  }
+  details.qa[open] summary::before{transform:rotate(90deg);}
+  details.qa .qa-body{padding:0 18px 16px; color:#d8d6cd; font-size:.92rem; border-top:1px solid var(--border); padding-top:12px;}
+  details.qa .qa-body pre{margin-top:10px;}
+
+  /* ---------- Assignments ---------- */
+  .assign-block{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:24px 26px; margin:20px 0 30px;}
+  .assign-block h4{margin-top:0; color:var(--amber); font-size:1.05rem;}
+  .assign-block .tag{display:inline-block; background:var(--panel-2); color:var(--teal); font-family:var(--mono); font-size:.68rem; padding:3px 9px; border-radius:20px; margin-bottom:12px;}
+  .step-label{font-family:var(--mono); font-size:.72rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:.5px; margin:16px 0 6px;}
+
+  footer{border-top:1px solid var(--border); padding:40px 34px; text-align:center; color:var(--text-faint); font-size:.85rem;}
+
+  /* ---------- Search highlight ---------- */
+  mark{background:var(--amber); color:#141821; border-radius:2px; padding:0 2px;}
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 900px){
+    .sidebar{
+      position:fixed; right:0; top:0; z-index:20; transform:translateX(100%);
+      transition:transform .25s; width:82%; max-width:320px; box-shadow:-10px 0 40px rgba(0,0,0,.4);
+    }
+    .sidebar.open{transform:translateX(0);}
+    .menu-btn{display:inline-block;}
+    .content{padding:34px 20px 100px;}
+    .hero h1{font-size:1.9rem;}
+    .topbar{padding:12px 18px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="dot"></span>
+      <span class="brand-title">Networking: حكاية زكا وكريم</span>
+    </div>
+    <div class="brand-sub">$ ping course --forever</div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="دور في الكتاب... (بحث)">
+    </div>
+
+    <div id="navContainer"></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <div class="path">~/network-course/<span id="pathCurrent">intro</span></div>
+      <div style="font-family:var(--mono); font-size:.72rem; color:var(--text-faint);" id="progressLabel"></div>
+    </div>
+
+    <div class="content" id="content">
+
+      <section class="hero" id="intro">
+        <div class="eyebrow">$ traceroute knowledge<span class="caret"></span></div>
+        <h1>تتعلم <em>Networking</em> زي ما بتتفرج على حكاية،<br>مش زي ما بتحفظ محاضرة.</h1>
+        <p>الموقع ده منهج Networking كامل من الصفر للاحتراف — من أول "إيه هي الشبكة أصلاً" لحد الـ Subnetting والـ Routing والـ Firewalls والـ VPN. متحكي على شكل حوار بين <b style="color:var(--text)">زكا</b> (مهندس بيتعلم) و<b style="color:var(--text)">الأستاذ كريم</b> (مهندس شبكات خبير). كل فصل فيه شرح، أمثلة حقيقية، حسابات عملية (خصوصاً في الـ Subnetting)، وأسئلة وأجوبة تتفتح بالضغط.</p>
+
+        <div class="terminal">
+          <div class="tbar"><span></span><span></span><span></span></div>
+          <div class="line"><span class="prompt">zekaa@learning</span><span class="cmd">:~$ </span><span class="cmd">whoami --network</span></div>
+          <div class="line out">14 chapters · OSI + TCP/IP + Subnetting + Routing + DNS + Firewalls + VPN</div>
+          <div class="line"><span class="prompt">zekaa@learning</span><span class="cmd">:~$ </span><span class="cmd">ping understanding --start<span class="caret"></span></span></div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat"><b>14</b><span>فصل شرح كامل</span></div>
+          <div class="stat"><b>50+</b><span>مثال حسابي وعملي</span></div>
+          <div class="stat"><b>70+</b><span>سؤال وجواب سريع</span></div>
+          <div class="stat"><b>100%</b><span>مصطلحات تقنية بالإنجليزي</span></div>
+        </div>
+      </section>
+
+      <div id="chapters"></div>
+
+    </div>
+
+    <footer>
+      $ traceroute your_networking_skills — كتاب Networking: حكاية زكا وكريم
+    </footer>
+  </div>
+
+</div>
+
+<script>
+/* ============ DATA WILL BE INSERTED HERE ============ */
+const CHAPTERS = [];
+CHAPTERS.push({
+  id:"ch1", num:"01", title:"إيه هي الشبكة أصلاً؟", navTitle:"مقدمة الشبكات",
+  lede:"زكا فتح اللابتوب ولقى نفسه متصل بالإنترنت من غير ما يعرف إيه اللي بيحصل فعلياً وراء الكواليس.",
+  body:`
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> أستاذ كريم، أنا بستخدم الإنترنت من سنين، بس مش فاهم إيه اللي بيحصل بالظبط لما بفتح موقع.</p>
+    <p><b class="who k">كريم:</b> خلينا نبدأ من الأساس. <b>Network</b> هي ببساطة مجموعة أجهزة متوصلة مع بعض عشان تتبادل بيانات. ممكن تكون جهازين بس متوصلين بكابل، أو ملايين الأجهزة حول العالم زي الإنترنت.</p>
+  </div>
+
+  <h3>أنواع الشبكات حسب الحجم</h3>
+  <table>
+    <tr><th>النوع</th><th>الاسم الكامل</th><th>النطاق</th></tr>
+    <tr><td><b>PAN</b></td><td>Personal Area Network</td><td>حواليك مباشرة (Bluetooth مثلاً)</td></tr>
+    <tr><td><b>LAN</b></td><td>Local Area Network</td><td>مبنى واحد أو بيت أو مكتب</td></tr>
+    <tr><td><b>MAN</b></td><td>Metropolitan Area Network</td><td>مدينة كاملة</td></tr>
+    <tr><td><b>WAN</b></td><td>Wide Area Network</td><td>دولة أو قارة (الإنترنت نفسه أكبر WAN)</td></tr>
+  </table>
+
+  <h3>عناصر أي شبكة أساسية</h3>
+  <ul>
+    <li><b>Node (Host)</b> — أي جهاز متصل بالشبكة (كمبيوتر، موبايل، سيرفر، برنتر).</li>
+    <li><b>Link</b> — الوسيلة اللي بتوصل الأجهزة ببعض (كابل، Wi-Fi، فايبر).</li>
+    <li><b>Switch</b> — بيوصل أجهزة جوه نفس الشبكة المحلية (LAN) مع بعض.</li>
+    <li><b>Router</b> — بيوصل شبكات مختلفة مع بعض (زي شبكة بيتك بالإنترنت).</li>
+  </ul>
+
+  <div class="diagram">
+[Laptop] ──┐
+[PC]     ──┼── Switch ── Router ── Internet
+[Printer] ──┘
+  (LAN محلي)      (بوابة للخارج)
+  </div>
+
+  <h3>Protocol — لغة التفاهم المشتركة</h3>
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> طب لو جهازين من نوعين مختلفين، إزاي بيفهموا بعض؟</p>
+    <p><b class="who k">كريم:</b> عن طريق <b>Protocol</b> — مجموعة قواعد متفق عليها عالمياً بتحدد إزاي البيانات بتتبعت وبتتستقبل وبتتفهم. زي ما لو أنا وإنت اتفقنا نتكلم إنجليزي، الجهازين بيتفقوا على "بروتوكول" معين زي TCP/IP.</p>
+  </div>
+
+  <div class="extra"><b>معلومة إضافية:</b> فيه منظمات عالمية بتحدد المعايير (standards) دي، أشهرها IEEE وIETF، عشان أي جهاز من أي شركة في العالم يقدر يتواصل مع أي جهاز تاني من غير مشاكل توافق.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق بين LAN وWAN؟", a:"LAN شبكة محلية محدودة النطاق (مبنى أو بيت)، وWAN شبكة واسعة تمتد لمسافات كبيرة جداً (دولة أو قارة)، والإنترنت نفسه أكبر مثال على WAN."},
+    {q:"إيه الفرق بين Switch وRouter؟", a:"Switch بيوصل أجهزة جوه نفس الشبكة المحلية مع بعض. Router بيوصل شبكات مختلفة مع بعض (زي شبكتك المحلية بالإنترنت العالمي)."},
+    {q:"إيه هو الـ Protocol وليه مهم؟", a:"مجموعة قواعد متفق عليها عالمياً بتحدد إزاي البيانات تتبعت وتتستقبل وتتفهم بين الأجهزة، بغض النظر عن نوع أو شركة الجهاز."},
+    {q:"اذكر مثالين على عناصر أساسية في أي شبكة", a:"Node (أي جهاز متصل، زي كمبيوتر أو موبايل) وLink (وسيلة التوصيل زي كابل أو Wi-Fi)."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch2", num:"02", title:"OSI Model: السبع طبقات", navTitle:"OSI Model",
+  lede:"كريم رسم سبع مستطيلات فوق بعض وقال: ده أهم نموذج هتفهم بيه أي حاجة تانية في الشبكات.",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> الـ OSI Model (Open Systems Interconnection) هو إطار نظري بيقسّم عملية التواصل بين جهازين لـ 7 طبقات منفصلة، كل طبقة ليها وظيفة محددة. الفايدة إنك تقدر تعزل المشكلة في أي طبقة من غير ما تفهم باقي الطبقات بالتفصيل.</p>
+  </div>
+
+  <h3>الطبقات السبعة (من فوق لتحت)</h3>
+  <table>
+    <tr><th>#</th><th>الطبقة</th><th>وظيفتها</th><th>أمثلة</th></tr>
+    <tr><td>7</td><td><b>Application</b></td><td>الواجهة اللي المستخدم بيتعامل معاها</td><td>HTTP, FTP, SMTP</td></tr>
+    <tr><td>6</td><td><b>Presentation</b></td><td>تنسيق وتشفير البيانات</td><td>SSL/TLS, JPEG, encryption</td></tr>
+    <tr><td>5</td><td><b>Session</b></td><td>إدارة الجلسة بين الجهازين</td><td>فتح/قفل الاتصال</td></tr>
+    <tr><td>4</td><td><b>Transport</b></td><td>ضمان وصول البيانات كاملة وبالترتيب</td><td>TCP, UDP</td></tr>
+    <tr><td>3</td><td><b>Network</b></td><td>توجيه البيانات بين شبكات مختلفة</td><td>IP, Routers</td></tr>
+    <tr><td>2</td><td><b>Data Link</b></td><td>نقل البيانات جوه نفس الشبكة المحلية</td><td>MAC address, Switches</td></tr>
+    <tr><td>1</td><td><b>Physical</b></td><td>الإشارة الكهربائية/الضوئية الفعلية</td><td>كابلات، Wi-Fi، فايبر</td></tr>
+  </table>
+
+  <div class="note"><b>طريقة سهلة تحفظ بيها الترتيب:</b> <i>"All People Seem To Need Data Processing"</i> — أول حرف كل كلمة بيمثل طبقة، من Application لحد Physical.</div>
+
+  <h3>تخيل رسالة وهي نازلة من طبقة لطبقة</h3>
+  <div class="diagram">
+[Application]  "مرحباً" (النص اللي كتبته)
+      │  يضيف معلومات تنسيق
+[Presentation]
+      │  يفتح جلسة
+[Session]
+      │  يقسمها لـ segments ويضيف port رقم
+[Transport]
+      │  يضيف IP address المصدر والوجهة
+[Network]
+      │  يضيف MAC address
+[Data Link]
+      │  يحولها لإشارة كهربائية/ضوئية
+[Physical]  ──────► تتبعت فعلياً على الكابل/الهواء
+  </div>
+  <p>العملية دي اسمها <b>Encapsulation</b> — كل طبقة بتلف (تغلف) البيانات بمعلومات إضافية خاصة بيها قبل ما تسلمها للطبقة اللي تحتها. والعكس بيحصل عند الاستقبال (Decapsulation).</p>
+
+  <div class="extra"><b>معلومة إضافية:</b> الطبقات 5، 6، 7 غالباً بيتعامل معاهم كوحدة واحدة عملياً في نماذج حديثة زي TCP/IP (هنشرحه الفصل الجاي)، لكن OSI بيفصلهم نظرياً عشان يوضح كل مسؤولية لوحدها.</div>
+  `,
+  qa:[
+    {q:"اذكر الطبقات السبعة لـ OSI بالترتيب من فوق لتحت", a:"Application, Presentation, Session, Transport, Network, Data Link, Physical."},
+    {q:"في أنهي طبقة بيشتغل الـ Router؟", a:"Network Layer (الطبقة الثالثة) — لإنه مسؤول عن التوجيه بين شبكات مختلفة باستخدام IP addresses."},
+    {q:"إيه معنى Encapsulation؟", a:"العملية اللي كل طبقة فيها بتضيف معلومات (header) خاصة بيها حوالين البيانات قبل ما تسلمها للطبقة اللي تحتها، لحد ما توصل لإشارة فعلية على الكابل."},
+    {q:"في أنهي طبقة بيشتغل الـ Switch؟", a:"Data Link Layer (الطبقة التانية) — بيستخدم MAC addresses لتوجيه البيانات جوه نفس الشبكة المحلية."},
+    {q:"إيه الفرق بين TCP وIP من ناحية الطبقة اللي كل واحد فيهم بيشتغل عليها؟", a:"TCP بيشتغل في Transport Layer (الطبقة الرابعة)، وIP بيشتغل في Network Layer (الطبقة التالتة)."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch3", num:"03", title:"TCP/IP Model: النموذج العملي المستخدم فعلياً", navTitle:"TCP/IP Model",
+  lede:"زكا: طب لو OSI نظري، فيه نموذج بنستخدمه فعلياً على أرض الواقع؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> يعني الإنترنت شغال فعلياً بـ 7 طبقات دول؟</p>
+    <p><b class="who k">كريم:</b> عملياً لأ. الإنترنت مبني على نموذج أبسط اسمه <b>TCP/IP Model</b>، وهو اللي فعلياً بيشتغل. OSI أداة تعليمية ممتازة لفهم المفاهيم، لكن TCP/IP هو التطبيق العملي الحقيقي.</p>
+  </div>
+
+  <h3>4 طبقات بدل 7</h3>
+  <table>
+    <tr><th>TCP/IP Layer</th><th>بيقابل في OSI</th><th>المسؤولية</th></tr>
+    <tr><td><b>Application</b></td><td>Application + Presentation + Session</td><td>البروتوكولات اللي التطبيقات بتستخدمها مباشرة</td></tr>
+    <tr><td><b>Transport</b></td><td>Transport</td><td>TCP وUDP</td></tr>
+    <tr><td><b>Internet</b></td><td>Network</td><td>IP والتوجيه</td></tr>
+    <tr><td><b>Network Access</b></td><td>Data Link + Physical</td><td>الأجهزة الفعلية والكابلات</td></tr>
+  </table>
+
+  <div class="diagram">
+OSI (7 طبقات)              TCP/IP (4 طبقات)
+─────────────              ─────────────────
+Application    ┐
+Presentation   ├──────────►  Application
+Session        ┘
+Transport      ───────────►  Transport
+Network        ───────────►  Internet
+Data Link      ┐
+Physical       ├──────────►  Network Access
+               ┘
+  </div>
+
+  <h3>ليه التبسيط ده حصل؟</h3>
+  <p>الـ TCP/IP Model اتطور فعلياً من مشروع عسكري أمريكي (ARPANET) قبل ما OSI يظهر أصلاً كنموذج نظري. لما الإنترنت انتشر، TCP/IP كان هو اللي فعلياً بيشتغل عليه، فبقى المعيار العملي، بينما OSI فضل الأداة التعليمية الأشمل لشرح المفاهيم.</p>
+
+  <div class="note"><b>خلاصة عملية:</b> لما تسمع مهندس شبكات بيقول "المشكلة في Layer 3"، هو غالباً بيقصد الترقيم بتاع OSI (يعني Network Layer)، حتى لو النظام الفعلي شغال بـ TCP/IP. الترقيم بتاع OSI بقى "اللغة المشتركة" لوصف المشاكل، حتى في بيئة TCP/IP الفعلية.</div>
+  `,
+  qa:[
+    {q:"كام طبقة في TCP/IP Model، وكام في OSI؟", a:"TCP/IP فيه 4 طبقات (Application, Transport, Internet, Network Access)، وOSI فيه 7 طبقات."},
+    {q:"طبقة Application في TCP/IP بتقابل أنهي طبقات في OSI؟", a:"بتقابل تلات طبقات مع بعض: Application وPresentation وSession."},
+    {q:"ليه TCP/IP هو النموذج المستخدم فعلياً مش OSI؟", a:"لإن TCP/IP اتطور عملياً وكان أساس الإنترنت من الأصل (من مشروع ARPANET)، بينما OSI ظهر كنموذج نظري لاحقاً وبقى أداة تعليمية أشمل لفهم المفاهيم وليس نموذج تطبيقي فعلي."},
+    {q:"لما مهندس شبكات يقول «المشكلة في Layer 3»، هو بيقصد نموذج مين؟", a:"غالباً بيقصد ترقيم OSI (يعني Network Layer)، رغم إن النظام الفعلي شغال بـ TCP/IP — ترقيم OSI بقى لغة مشتركة لوصف طبقات المشاكل."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch4", num:"04", title:"IP Addressing: عنوان كل جهاز", navTitle:"IP Addressing",
+  lede:"زكا: كل جهاز على الإنترنت ليه عنوان فريد؟ إزاي ده بيتحسب أصلاً؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> بالظبط. الـ IP Address هو "عنوان البيت" بتاع كل جهاز على الشبكة. من غيره، البيانات ملهاش وجهة تروحلها.</p>
+  </div>
+
+  <h3>IPv4 — الصيغة الأشهر</h3>
+  <p>عنوان IPv4 بيتكون من 32 بت (bit)، مكتوبة في 4 أجزاء (octets) مفصولة بنقط، كل جزء بيتراوح من 0 لـ 255:</p>
+  <div class="diagram">
+192   .   168   .   1   .   10
+ 8bit     8bit    8bit  8bit   =  32 bit إجمالي
+
+Binary:  11000000.10101000.00000001.00001010
+  </div>
+
+  <h3>ليه كل رقم من 0 لـ 255 بالظبط؟</h3>
+  <p>لإن كل جزء (octet) هو 8 بت، وأقصى قيمة ممكنة بـ 8 بت هي <code class="inline">2^8 - 1 = 255</code>. يعني الأرقام بتبدأ من 0 (كل البتات صفر) لحد 255 (كل البتات واحد).</p>
+
+  <h3>Classes — التقسيم التقليدي (لسه مهم تفهمه)</h3>
+  <table>
+    <tr><th>Class</th><th>المدى</th><th>الاستخدام التقليدي</th></tr>
+    <tr><td>A</td><td>1.0.0.0 – 126.255.255.255</td><td>شبكات ضخمة جداً</td></tr>
+    <tr><td>B</td><td>128.0.0.0 – 191.255.255.255</td><td>شبكات متوسطة (شركات كبيرة)</td></tr>
+    <tr><td>C</td><td>192.0.0.0 – 223.255.255.255</td><td>شبكات صغيرة (أشهر استخدام يومي)</td></tr>
+    <tr><td>D</td><td>224.0.0.0 – 239.255.255.255</td><td>Multicast</td></tr>
+    <tr><td>E</td><td>240.0.0.0 – 255.255.255.255</td><td>محجوز للتجارب</td></tr>
+  </table>
+
+  <h3>Public IP مقابل Private IP</h3>
+  <ul>
+    <li><b>Public IP</b> — فريد على مستوى الإنترنت كله، وده اللي بيوصلك بيه العالم الخارجي.</li>
+    <li><b>Private IP</b> — مستخدم جوه الشبكات المحلية بس، وممكن يتكرر في شبكات مختلفة من غير مشاكل (لإنه مش شايف الإنترنت مباشرة).</li>
+  </ul>
+
+  <table>
+    <tr><th>مدى الـ Private IP</th><th>Class</th></tr>
+    <tr><td>10.0.0.0 – 10.255.255.255</td><td>A</td></tr>
+    <tr><td>172.16.0.0 – 172.31.255.255</td><td>B</td></tr>
+    <tr><td>192.168.0.0 – 192.168.255.255</td><td>C</td></tr>
+  </table>
+
+  <div class="note"><b>مثال من حياتك اليومية:</b> الراوتر بتاع بيتك بيدّي كل جهاز عندك IP خاص زي <code class="inline">192.168.1.5</code> (Private)، لكن الراوتر نفسه عنده IP واحد عام (Public) بيتواصل بيه مع الإنترنت. عملية التحويل دي اسمها <b>NAT</b> (هنشرحها بالتفصيل في فصل الـ Firewalls).</div>
+
+  <h3>IPv6 — الجيل الجديد</h3>
+  <p>بسبب نفاذ عناوين IPv4 (مساحته محدودة بـ 32 بت بس)، ظهر <b>IPv6</b> بمساحة 128 بت، بيدّي عدد عناوين ضخم جداً (تريليونات تريليونات). شكله مختلف تماماً:</p>
+  <pre><code>2001:0db8:85a3:0000:0000:8a2e:0370:7334</code></pre>
+
+  <div class="extra"><b>معلومة إضافية:</b> IPv6 لسه مش منتشر بنسبة 100% عالمياً، وكتير من الشبكات شغالة بنظام مختلط (dual-stack) بيدعم IPv4 وIPv6 مع بعض في نفس الوقت.</div>
+  `,
+  qa:[
+    {q:"كام bit في عنوان IPv4؟", a:"32 bit، مقسمة على 4 أجزاء (octets) كل واحد 8 bits."},
+    {q:"ليه كل جزء في عنوان IPv4 بيتراوح من 0 لـ 255؟", a:"لإن كل جزء (octet) هو 8 بت، وأقصى قيمة ممكنة بـ 8 بت هي 2 أس 8 ناقص 1 يعني 255."},
+    {q:"إيه الفرق بين Public IP وPrivate IP؟", a:"Public IP فريد على مستوى الإنترنت كله. Private IP مستخدم جوه شبكات محلية بس، وممكن يتكرر في شبكات مختلفة لإنه مش متصل بالإنترنت مباشرة."},
+    {q:"إيه هو NAT ببساطة؟", a:"العملية اللي بتحول بين Private IP (جوه شبكتك المحلية) وPublic IP (الراوتر بتاعك) عشان الأجهزة تقدر توصل للإنترنت رغم إنها كلها بتشارك IP عام واحد."},
+    {q:"ليه ظهر IPv6؟", a:"بسبب نفاذ (نقص) عناوين IPv4 المتاحة، لإن مساحته محدودة بـ 32 بت بس. IPv6 بيوفر مساحة أكبر بكتير (128 bit)."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch5", num:"05", title:"Subnetting: تقسيم الشبكة بالحساب", navTitle:"Subnetting",
+  lede:"كريم: ده أهم فصل هتتعلمه، وأصعبه شوية، بس لو فهمته صح، هتبقى فاهم الشبكات فعلياً.",
+  body:`
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> ليه أصلاً محتاجين نقسّم الشبكة؟</p>
+    <p><b class="who k">كريم:</b> تخيل شركة عندها 500 جهاز كلهم على شبكة واحدة كبيرة. أي مشكلة (زي broadcast storm) هتأثر على الكل. الحل إنك تقسّم الشبكة الكبيرة لشبكات فرعية أصغر (subnets)، كل واحدة معزولة نسبياً، أسهل في الإدارة والأمان.</p>
+  </div>
+
+  <h3>Subnet Mask — الخط الفاصل</h3>
+  <p>كل عنوان IP بييجي مصاحبه <b>Subnet Mask</b> بيحدد "أنهي جزء من العنوان ده بيمثل الشبكة (Network) وأنهي جزء بيمثل الجهاز (Host)".</p>
+  <pre><code>IP Address:    192.168.1.10
+Subnet Mask:   255.255.255.0
+
+يعني: أول 3 أجزاء (192.168.1) = رقم الشبكة
+      الجزء الأخير (10) = رقم الجهاز جوه الشبكة</code></pre>
+
+  <h3>CIDR Notation — الطريقة المختصرة</h3>
+  <p>بدل ما تكتب الـ Subnet Mask كامل، بتكتب عدد البتات المستخدمة للشبكة بعد شرطة مائلة:</p>
+  <table>
+    <tr><th>Subnet Mask</th><th>CIDR</th><th>عدد البتات للـ Network</th></tr>
+    <tr><td>255.0.0.0</td><td>/8</td><td>8 بت</td></tr>
+    <tr><td>255.255.0.0</td><td>/16</td><td>16 بت</td></tr>
+    <tr><td>255.255.255.0</td><td>/24</td><td>24 بت</td></tr>
+    <tr><td>255.255.255.128</td><td>/25</td><td>25 بت</td></tr>
+  </table>
+  <p>يعني <code class="inline">192.168.1.10/24</code> معناها: أول 24 بت (3 أجزاء) للشبكة، والباقي (8 بت) للأجهزة.</p>
+
+  <h3>إزاي تحسب عدد الأجهزة الممكنة في أي Subnet؟</h3>
+  <div class="diagram">
+عدد الأجهزة المتاحة  =  2^(عدد بتات الـ Host)  -  2
+
+الـ -2 عشان: عنوان الشبكة نفسه (Network Address) + عنوان البث (Broadcast Address)
+هما محجوزين ومش بيتستخدموا لأجهزة فعلية
+  </div>
+
+  <h3>مثال محسوب بالتفصيل: /24</h3>
+  <pre><code>Subnet:  192.168.1.0/24
+Subnet Mask: 255.255.255.0
+
+بتات الـ Host = 32 - 24 = 8 بت
+عدد العناوين الكلي = 2^8 = 256
+عدد الأجهزة الفعلية = 256 - 2 = 254
+
+Network Address:    192.168.1.0    (محجوز)
+أول جهاز مستخدم:     192.168.1.1
+آخر جهاز مستخدم:     192.168.1.254
+Broadcast Address:  192.168.1.255  (محجوز)</code></pre>
+
+  <h3>مثال تاني: /26 (تقسيم أصغر)</h3>
+  <pre><code>بتات الـ Host = 32 - 26 = 6 بت
+عدد العناوين الكلي = 2^6 = 64
+عدد الأجهزة الفعلية = 64 - 2 = 62
+
+يعني كل subnet من نوع /26 بيسع 62 جهاز بس، مناسب لفرع صغير أو قسم معين</code></pre>
+
+  <h3>جدول مرجعي سريع (احفظه)</h3>
+  <table>
+    <tr><th>CIDR</th><th>عدد الأجهزة الفعلية</th></tr>
+    <tr><td>/24</td><td>254</td></tr>
+    <tr><td>/25</td><td>126</td></tr>
+    <tr><td>/26</td><td>62</td></tr>
+    <tr><td>/27</td><td>30</td></tr>
+    <tr><td>/28</td><td>14</td></tr>
+    <tr><td>/29</td><td>6</td></tr>
+    <tr><td>/30</td><td>2</td></tr>
+  </table>
+
+  <h3>تمرين محلول خطوة بخطوة</h3>
+  <div class="assign-block">
+    <span class="tag">مثال محلول</span>
+    <p><b>السؤال:</b> عندك شبكة <code class="inline">10.0.0.0/28</code>. كام جهاز يقدر يتصل؟ وإيه أول وآخر IP صالح للاستخدام؟</p>
+    <div class="step-label">الحل خطوة بخطوة</div>
+    <pre><code>1. بتات الـ Host = 32 - 28 = 4 بت
+2. عدد العناوين الكلي = 2^4 = 16
+3. عدد الأجهزة الفعلية = 16 - 2 = 14 جهاز
+
+4. Network Address (محجوز) = 10.0.0.0
+5. أول IP صالح = 10.0.0.1
+6. آخر IP صالح = 10.0.0.14
+7. Broadcast Address (محجوز) = 10.0.0.15</code></pre>
+  </div>
+
+  <div class="warn"><b>غلطة شائعة:</b> كتير من المبتدئين بينسوا يطرحوا الـ 2 بتوع Network وBroadcast، ويفتكروا إن عدد الأجهزة = 2 أس عدد بتات الـ Host مباشرة. الرقم ده هو "عدد العناوين الكلي"، مش "عدد الأجهزة القابلة للاستخدام فعلياً".</div>
+  `,
+  qa:[
+    {q:"إيه وظيفة الـ Subnet Mask؟", a:"بيحدد أنهي جزء من عنوان IP بيمثل رقم الشبكة (Network) وأنهي جزء بيمثل رقم الجهاز (Host) جوه الشبكة دي."},
+    {q:"إيه معنى /24 في CIDR notation؟", a:"معناها إن أول 24 بت من العنوان بتمثل الشبكة، والباقي (8 بت) بيمثل الأجهزة. بتقابل Subnet Mask بقيمة 255.255.255.0."},
+    {q:"إيه المعادلة لحساب عدد الأجهزة الفعلية في أي Subnet؟", a:"2 أس (عدد بتات الـ Host) ناقص 2 — الطرح بـ 2 بسبب حجز عنوان الشبكة (Network Address) وعنوان البث (Broadcast Address)."},
+    {q:"في شبكة 192.168.1.0/24، إيه هو Broadcast Address؟", a:"192.168.1.255 — آخر عنوان في المدى، محجوز دايماً كعنوان بث."},
+    {q:"كام جهاز فعلي يقدر يتصل بشبكة من نوع /27؟", a:"بتات الـ Host = 32-27 = 5. عدد العناوين = 2^5 = 32. عدد الأجهزة الفعلية = 32-2 = 30 جهاز."},
+    {q:"ليه بنطرح 2 من إجمالي عدد العناوين في أي Subnet؟", a:"لإن أول عنوان (Network Address) وآخر عنوان (Broadcast Address) في أي subnet محجوزين للنظام نفسه، ومش بيتحسبوا كأجهزة فعلية قابلة للاستخدام."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch6", num:"06", title:"Routing: إزاي البيانات تلاقي طريقها", navTitle:"Routing",
+  lede:"زكا: طب البيانات إزاي بتعرف تمشي من جهازي هنا لسيرفر في أمريكا مثلاً؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> عن طريق <b>Routing</b> — عملية اختيار أفضل مسار لنقل البيانات من شبكة لشبكة تانية، لحد ما توصل للوجهة النهائية. كل Router على الطريق بياخد قرار "أبعتها فين بعد كده؟" بناءً على جدول عنده اسمه Routing Table.</p>
+  </div>
+
+  <h3>Routing Table — دفتر العناوين بتاع الراوتر</h3>
+  <p>كل Router عنده جدول بيوضح "لو الوجهة كذا، ابعتها من الـ interface كذا". مثال مبسط:</p>
+  <pre><code>Destination        Next Hop         Interface
+192.168.1.0/24     directly         eth0
+10.0.0.0/8         192.168.1.1      eth1
+0.0.0.0/0          192.168.1.254    eth1   (default route — أي حاجة تانية)</code></pre>
+
+  <div class="note"><b>الـ Default Route (<code class="inline">0.0.0.0/0</code>):</b> ده "المسار الافتراضي" — لو الراوتر ملقاش مسار محدد للوجهة في الجدول، بيبعتها هنا. عادة بيوصلك للإنترنت في النهاية.</div>
+
+  <h3>Static Routing مقابل Dynamic Routing</h3>
+  <table>
+    <tr><th></th><th>Static Routing</th><th>Dynamic Routing</th></tr>
+    <tr><td>الإعداد</td><td>يدوي، الـ admin بيكتب المسارات بنفسه</td><td>تلقائي، الراوترات بتتبادل المعلومات وتحدّث نفسها</td></tr>
+    <tr><td>مناسب لـ</td><td>شبكات صغيرة وبسيطة</td><td>شبكات كبيرة ومعقدة</td></tr>
+    <tr><td>الاستجابة للتغيير</td><td>بطيئة (تحتاج تدخل يدوي)</td><td>سريعة (بتتكيف تلقائياً)</td></tr>
+    <tr><td>أمثلة بروتوكولات</td><td>—</td><td>OSPF, BGP, RIP</td></tr>
+  </table>
+
+  <h3>Hop — كل محطة في الطريق</h3>
+  <p>كل مرة الباكيت (Packet) بيعدي من راوتر لراوتر، ده اسمه <b>Hop</b>. تقدر تشوف رحلة الباكيت كاملة بأمر:</p>
+  <pre><code>traceroute google.com     <span class="cmt"># على Linux/Mac</span>
+tracert google.com        <span class="cmt"># على Windows</span></code></pre>
+  <p>الأمر ده بيوريك كل Hop على الطريق، والوقت اللي كل واحد فيهم بياخده.</p>
+
+  <div class="extra"><b>معلومة إضافية:</b> بروتوكول BGP (Border Gateway Protocol) هو اللي فعلياً بيشغّل الإنترنت العالمي — هو المسؤول عن توجيه البيانات بين آلاف الشبكات الكبيرة (ISPs) حول العالم.</div>
+  `,
+  qa:[
+    {q:"إيه هي الـ Routing Table؟", a:"جدول موجود جوه كل Router بيوضح لكل وجهة معروفة، المسار (Next Hop) اللي البيانات لازم تتوجه عليه عشان توصل."},
+    {q:"إيه هو الـ Default Route؟", a:"المسار الافتراضي (0.0.0.0/0) اللي الراوتر بيستخدمه لو الوجهة مش موجودة في الجدول بشكل محدد — عادة بيوصل للإنترنت."},
+    {q:"إيه الفرق بين Static وDynamic Routing؟", a:"Static Routing بيتظبط يدوياً بواسطة الـ admin، مناسب للشبكات الصغيرة. Dynamic Routing بيتحدث تلقائياً عن طريق بروتوكولات (زي OSPF, BGP) وبيتكيف بسرعة مع أي تغيير، مناسب للشبكات الكبيرة."},
+    {q:"إيه معنى Hop؟", a:"كل مرة الباكيت بيعدي من راوتر لراوتر تانية في رحلته للوجهة، وده اللي أمر traceroute بيوضحه خطوة بخطوة."},
+    {q:"إيه البروتوكول المسؤول عن توجيه البيانات بين الشبكات الكبيرة حول العالم (بيشغّل الإنترنت فعلياً)؟", a:"BGP (Border Gateway Protocol)."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch7", num:"07", title:"Switching: التوصيل جوه الشبكة المحلية", navTitle:"Switching",
+  lede:"كريم: قبل ما البيانات تخرج برا شبكتك، لازم تتوصل صح جواها الأول. ده شغل الـ Switch.",
+  body:`
+  <div class="dialogue">
+    <p><b class="who">زكا:</b> طب الـ Switch إزاي بيعرف يودي البيانات للجهاز الصح جوه نفس الشبكة؟</p>
+    <p><b class="who k">كريم:</b> عن طريق <b>MAC Address</b> — عنوان فريد ومحفور فعلياً في كارت الشبكة (NIC) بتاع كل جهاز، من وقت التصنيع.</p>
+  </div>
+
+  <h3>MAC Address — البصمة الفعلية للجهاز</h3>
+  <p>عنوان بطول 48 بت، بيتكتب عادة بصيغة hexadecimal، مقسم لـ 6 أزواج:</p>
+  <pre><code>00:1A:2B:3C:4D:5E</code></pre>
+  <p>أول 3 بايتات (<code class="inline">00:1A:2B</code>) بتحدد الشركة المصنعة (OUI)، والـ 3 التانية رقم تسلسلي فريد للجهاز نفسه.</p>
+
+  <div class="note"><b>الفرق الجوهري بين IP وMAC:</b> IP Address ممكن يتغير (بيتحدد حسب الشبكة اللي إنت متصل بيها)، لكن MAC Address ثابت مع كارت الشبكة نفسه (رغم إن فيه تقنيات حديثة تقدر "تقلّده" لأسباب أمنية أو خصوصية).</div>
+
+  <h3>إزاي الـ Switch بيتعلم مين فين؟</h3>
+  <p>الـ Switch بيبني جدول اسمه <b>MAC Address Table</b> بيتعلمه تلقائياً وهو شغال:</p>
+  <ol>
+    <li>أول ما جهاز يبعت أي بيانات، الـ Switch بيسجل: "MAC ده موجود على Port كذا".</li>
+    <li>لو طلب بيانات لجهاز MAC معروف عنده، بيبعتها على الـ Port بتاعه بس.</li>
+    <li>لو MAC مش معروف، بيبعت نسخة لكل الـ Ports (Flooding) لحد ما يوصله رد ويتعلم مكانه.</li>
+  </ol>
+
+  <h3>VLAN — تقسيم منطقي جوه نفس الـ Switch الفعلي</h3>
+  <p><b>Virtual LAN (VLAN)</b> بيخليك تقسّم أجهزة متوصلة فعلياً بنفس الـ Switch لشبكات منفصلة منطقياً، وكأنهم على أجهزة مختلفة تماماً. مفيد جداً في الشركات لفصل الأقسام (مثلاً IT بمعزل عن HR) من غير الحاجة لسويتشات فيزيائية منفصلة.</p>
+
+  <div class="diagram">
+Switch واحد فعلياً، لكن مقسم منطقياً:
+
+Port 1-8    ──►  VLAN 10 (IT Department)
+Port 9-16   ──►  VLAN 20 (HR Department)
+
+الاتنين مش قادرين يتواصلوا مباشرة إلا عن طريق Router بينهم
+  </div>
+
+  <div class="extra"><b>معلومة إضافية:</b> عشان أجهزة على VLANs مختلفة تتواصل مع بعض، لازم تعدي عن طريق Router أو Layer 3 Switch — ده اسمه Inter-VLAN Routing.</div>
+  `,
+  qa:[
+    {q:"إيه هو MAC Address وبيتكون منين؟", a:"عنوان فريد بطول 48 بت محفور في كارت الشبكة من وقت التصنيع، أول 3 بايتات بتحدد الشركة المصنعة (OUI) والباقي رقم تسلسلي فريد."},
+    {q:"إيه الفرق الجوهري بين IP Address وMAC Address؟", a:"IP Address ممكن يتغير حسب الشبكة المتصل بيها الجهاز، بينما MAC Address ثابت مع كارت الشبكة نفسه."},
+    {q:"إزاي الـ Switch بيتعلم مكان كل جهاز؟", a:"عن طريق بناء جدول MAC Address Table تلقائياً وهو شغال — كل ما جهاز يبعت بيانات، بيسجل الـ MAC بتاعه مربوط بالـ Port اللي جاي منه."},
+    {q:"إيه هو VLAN وليه مفيد؟", a:"Virtual LAN — طريقة لتقسيم أجهزة متوصلة فعلياً بنفس الـ Switch لشبكات منفصلة منطقياً، مفيد لفصل الأقسام المختلفة في شركة من غير سويتشات فيزيائية منفصلة."},
+    {q:"إيه اللي بيحصل لو الـ Switch ملقاش MAC Address معين في جدوله؟", a:"بيعمل Flooding — يبعت نسخة من البيانات لكل الـ Ports المتاحة، لحد ما يوصله رد من الجهاز الصح ويتعلم مكانه ويسجله في الجدول."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch8", num:"08", title:"TCP مقابل UDP: طريقتين لنقل البيانات", navTitle:"TCP vs UDP",
+  lede:"زكا: ليه لما بفتح موقع البيانات بتوصل كاملة، لكن في المكالمات أحياناً بيحصل تقطيع؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> ده الفرق بين بروتوكولين أساسيين في Transport Layer: TCP وUDP. كل واحد فيهم عنده فلسفة مختلفة تماماً في نقل البيانات.</p>
+  </div>
+
+  <h3>TCP (Transmission Control Protocol) — الموثوق</h3>
+  <ul>
+    <li><b>Connection-oriented</b> — بيعمل اتصال (handshake) قبل ما يبدأ يبعت بيانات فعلية.</li>
+    <li>بيضمن وصول كل البيانات <b>كاملة وبالترتيب الصحيح</b> — لو باكيت ضاع، بيعيد بعته.</li>
+    <li>أبطأ نسبياً بسبب كل ده التأكيد والتنظيم.</li>
+  </ul>
+
+  <h3>الـ Three-Way Handshake</h3>
+  <p>قبل ما أي بيانات فعلية تتبعت بـ TCP، بيحصل "مصافحة" من 3 خطوات:</p>
+  <div class="diagram">
+Client                          Server
+   │──────── SYN ─────────────────►│   "عايز أتصل"
+   │◄─────── SYN-ACK ───────────────│   "تمام، وأنا كمان جاهز"
+   │──────── ACK ──────────────────►│   "تمام، يلا نبدأ"
+   │                                │
+   │◄══════ نقل البيانات الفعلي ═══►│
+  </div>
+
+  <h3>UDP (User Datagram Protocol) — السريع</h3>
+  <ul>
+    <li><b>Connectionless</b> — بيبعت البيانات على طول من غير أي "مصافحة" مسبقة.</li>
+    <li>مافيش أي ضمان إن البيانات هتوصل أو هتوصل بالترتيب.</li>
+    <li>أسرع بكتير لإنه مافيهوش أي overhead إضافي.</li>
+  </ul>
+
+  <h3>إمتى تستخدم إيه؟</h3>
+  <table>
+    <tr><th>الاستخدام</th><th>البروتوكول</th><th>ليه</th></tr>
+    <tr><td>تصفح المواقع (HTTP/HTTPS)</td><td>TCP</td><td>لازم كل بايت يوصل صح، مش مقبول نقص جزء من الصفحة</td></tr>
+    <tr><td>نقل الملفات (FTP)</td><td>TCP</td><td>الملف لازم يوصل كامل بدون أي عيب</td></tr>
+    <tr><td>مكالمات الفيديو (Video Call)</td><td>UDP</td><td>السرعة أهم من الكمال — تقطيع بسيط أفضل من تأخير</td></tr>
+    <tr><td>الألعاب أونلاين (Online Gaming)</td><td>UDP</td><td>محتاج استجابة فورية، فريم متأخر ملوش لازمة</td></tr>
+    <tr><td>DNS Queries</td><td>UDP (عادة)</td><td>طلب بسيط وسريع، وممكن يتكرر بسهولة لو فشل</td></tr>
+  </table>
+
+  <h3>Ports — الباب الصح جوه الجهاز</h3>
+  <p>الـ IP Address بيوديك للجهاز الصح، لكن الـ Port بيوديك للتطبيق الصح جوه الجهاز ده. الأرقام من 0 لـ 65535.</p>
+  <table>
+    <tr><th>Port</th><th>الخدمة</th></tr>
+    <tr><td>20/21</td><td>FTP</td></tr>
+    <tr><td>22</td><td>SSH</td></tr>
+    <tr><td>25</td><td>SMTP (إيميل صادر)</td></tr>
+    <tr><td>53</td><td>DNS</td></tr>
+    <tr><td>80</td><td>HTTP</td></tr>
+    <tr><td>443</td><td>HTTPS</td></tr>
+    <tr><td>3306</td><td>MySQL</td></tr>
+    <tr><td>5432</td><td>PostgreSQL</td></tr>
+  </table>
+
+  <div class="note"><b>Socket = IP + Port:</b> الجمع بين IP Address ورقم الـ Port اسمه Socket، وهو اللي بيحدد بدقة "أي تطبيق، على أي جهاز، محتاج يستقبل البيانات دي". مثال: <code class="inline">192.168.1.10:443</code>.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق الجوهري بين TCP وUDP؟", a:"TCP يضمن وصول البيانات كاملة وبالترتيب الصحيح (لكنه أبطأ)، بينما UDP يبعت البيانات بسرعة من غير أي ضمانات (Connectionless)."},
+    {q:"اشرح خطوات الـ Three-Way Handshake", a:"1) Client يبعت SYN للسيرفر. 2) السيرفر يرد بـ SYN-ACK. 3) الـ Client يبعت ACK يأكد، وبعدها يبدأ نقل البيانات الفعلي."},
+    {q:"ليه مكالمات الفيديو بتستخدم UDP مش TCP؟", a:"لإن السرعة والاستجابة الفورية أهم من الكمال في المكالمات المباشرة — تقطيع بسيط في الصورة أفضل من تأخير محسوس بسبب انتظار إعادة إرسال بيانات ضايعة."},
+    {q:"إيه وظيفة الـ Port؟", a:"يحدد أي تطبيق بالتحديد جوه الجهاز محتاج يستقبل البيانات، بينما IP Address بيحدد الجهاز نفسه بس."},
+    {q:"إيه هو الـ Port الافتراضي لـ HTTPS؟", a:"443"},
+    {q:"إيه معنى Socket؟", a:"الجمع بين IP Address ورقم الـ Port مع بعض، بيحدد بدقة أي تطبيق على أي جهاز محتاج يستقبل البيانات."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch9", num:"09", title:"DNS: دليل التليفونات بتاع الإنترنت", navTitle:"DNS",
+  lede:"زكا: أنا بكتب google.com بس، إزاي الجهاز بيعرف يوصل لسيرفر جوجل الحقيقي؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> عن طريق <b>DNS</b> (Domain Name System) — نظام بيحول الأسماء اللي إحنا البشر بنفهمها (زي google.com) لعناوين IP اللي الأجهزة فعلياً بتحتاجها للتواصل.</p>
+  </div>
+
+  <h3>ليه محتاجين DNS أصلاً؟</h3>
+  <p>تخيل تحفظ IP لكل موقع بتزوره — مستحيل عملياً. DNS بيدّيك "دليل تليفونات" بتقول له الاسم وهو بيرجعلك الرقم (IP) المطلوب.</p>
+
+  <h3>رحلة الطلب: إيه اللي بيحصل لما تكتب اسم موقع؟</h3>
+  <div class="diagram">
+1. المتصفح يسأل: عندي google.com مخزن قبل كده؟ (Browser Cache)
+       │ لأ
+       ▼
+2. يسأل نظام التشغيل (OS Cache / hosts file)
+       │ لأ
+       ▼
+3. يروح لـ DNS Resolver (عادة بتاع الـ ISP بتاعك)
+       │
+       ▼
+4. Resolver يسأل Root DNS Server: "مين عارف .com؟"
+       │
+       ▼
+5. يسأل TLD Server (.com): "مين عارف google.com؟"
+       │
+       ▼
+6. يسأل Authoritative DNS Server بتاع جوجل: "إيه IP الـ google.com؟"
+       │
+       ▼
+7. يرجع الـ IP للمتصفح، والمتصفح يتصل بيه مباشرة
+  </div>
+
+  <h3>أنواع سجلات DNS الأساسية (DNS Records)</h3>
+  <table>
+    <tr><th>النوع</th><th>الوظيفة</th></tr>
+    <tr><td><b>A</b></td><td>بيربط اسم Domain بعنوان IPv4</td></tr>
+    <tr><td><b>AAAA</b></td><td>بيربط اسم Domain بعنوان IPv6</td></tr>
+    <tr><td><b>CNAME</b></td><td>بيربط اسم بديل (alias) لاسم Domain تاني</td></tr>
+    <tr><td><b>MX</b></td><td>بيحدد سيرفر الإيميل المسؤول عن الـ Domain</td></tr>
+    <tr><td><b>TXT</b></td><td>بيانات نصية إضافية (غالباً للتحقق من الملكية أو الأمان)</td></tr>
+    <tr><td><b>NS</b></td><td>بيحدد أي سيرفرات DNS مسؤولة عن الـ Domain</td></tr>
+  </table>
+
+  <h3>أدوات عملية للتشخيص</h3>
+  <pre><code><span class="cmt"># اعرف IP بتاع أي domain</span>
+nslookup google.com
+
+<span class="cmt"># نفس الفكرة، أداة أحدث وأكتر تفصيلاً</span>
+dig google.com
+
+<span class="cmt"># اعرف كل الـ hops اللي البيانات بتعدي عليها</span>
+traceroute google.com</code></pre>
+
+  <div class="extra"><b>معلومة إضافية:</b> DNS بيستخدم UDP على Port 53 عادةً للطلبات السريعة، لكن بيتحول لـ TCP في حالات معينة (زي الردود الكبيرة أو DNS Zone Transfers) لإنها محتاجة موثوقية أكتر.</div>
+  `,
+  qa:[
+    {q:"إيه وظيفة DNS بشكل مباشر؟", a:"يحول الأسماء المفهومة للبشر (زي google.com) لعناوين IP اللي الأجهزة فعلياً محتاجاها للتواصل."},
+    {q:"إيه هو DNS Record من نوع A؟", a:"سجل بيربط اسم Domain مباشرة بعنوان IPv4."},
+    {q:"إيه الفرق بين A Record وCNAME Record؟", a:"A Record بيربط الاسم مباشرة بـ IP. CNAME بيربط اسم بديل (alias) باسم Domain تاني، بدل ما يربطه مباشرة بـ IP."},
+    {q:"إيه هو Root DNS Server ودوره في رحلة البحث؟", a:"أعلى مستوى في هرمية DNS، بيوجه الطلب لـ TLD Server المسؤول (زي .com)، وهو أول محطة لو الـ Resolver ملوش إجابة مخزنة."},
+    {q:"إيه Port الافتراضي اللي DNS بيستخدمه؟", a:"Port 53، غالباً عن طريق UDP للطلبات العادية السريعة."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch10", num:"10", title:"DHCP: إزاي جهازك ياخد IP تلقائي", navTitle:"DHCP",
+  lede:"زكا: أنا مش بكتب IP يدوي أبداً على جهازي، وبرضو بشتغل عادي. إزاي؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> ده شغل <b>DHCP</b> (Dynamic Host Configuration Protocol) — بروتوكول بيدّي لجهازك IP Address تلقائياً أول ما يتصل بالشبكة، من غير ما تحدده إنت يدوياً.</p>
+  </div>
+
+  <h3>عملية الـ DHCP: DORA</h3>
+  <p>4 خطوات، بتتلخص في اختصار سهل للحفظ: <b>DORA</b>:</p>
+  <div class="diagram">
+Client                          DHCP Server
+   │──────── Discover ─────────────►│   "محتاج IP، فيه حد يقدر يدّيني؟"
+   │◄─────── Offer ──────────────────│   "أيوه، خد العنوان ده"
+   │──────── Request ────────────────►│   "تمام، هستخدم ده"
+   │◄─────── Acknowledge ────────────│   "تمام، اتفقنا"
+  </div>
+  <table>
+    <tr><th>الحرف</th><th>الخطوة</th><th>الوصف</th></tr>
+    <tr><td>D</td><td>Discover</td><td>الجهاز بيبعت طلب broadcast لأي DHCP Server موجود</td></tr>
+    <tr><td>O</td><td>Offer</td><td>الـ Server بيرد بعرض IP معين متاح</td></tr>
+    <tr><td>R</td><td>Request</td><td>الجهاز بيأكد إنه عايز ياخد العنوان ده تحديداً</td></tr>
+    <tr><td>A</td><td>Acknowledge</td><td>الـ Server بيأكد ويسجل العنوان كمستخدم من الجهاز ده</td></tr>
+  </table>
+
+  <h3>إيه اللي DHCP بيديه غير الـ IP بس؟</h3>
+  <ul>
+    <li>عنوان الـ IP نفسه.</li>
+    <li>الـ Subnet Mask.</li>
+    <li>الـ Default Gateway (عنوان الراوتر).</li>
+    <li>عناوين DNS Servers.</li>
+    <li>مدة صلاحية العنوان (Lease Time) — بعدها الجهاز لازم يجدد الطلب.</li>
+  </ul>
+
+  <div class="note"><b>Static IP مقابل Dynamic IP:</b> السيرفرات وأجهزة معينة (زي الطابعات المشتركة) غالباً بتاخد IP ثابت (Static) بيتظبط يدوياً، عشان عنوانها ميتغيرش أبداً. الأجهزة العادية (لابتوبات، موبايلات) بتاخد Dynamic IP عن طريق DHCP.</div>
+
+  <div class="extra"><b>معلومة إضافية:</b> لو جهازك مش لاقي DHCP Server خالص (نادر بس بيحصل)، أنظمة زي Windows بتديله عنوان مؤقت من مدى خاص اسمه APIPA (يبدأ بـ 169.254.x.x) لحد ما يلاقي Server حقيقي.</div>
+  `,
+  qa:[
+    {q:"إيه اختصار خطوات عملية DHCP الأربعة؟", a:"DORA: Discover, Offer, Request, Acknowledge."},
+    {q:"غير عنوان IP، إيه المعلومات التانية اللي DHCP بيوفرها للجهاز؟", a:"Subnet Mask، Default Gateway (عنوان الراوتر)، عناوين DNS Servers، ومدة صلاحية العنوان (Lease Time)."},
+    {q:"إمتى تختار Static IP بدل Dynamic IP؟", a:"للأجهزة اللي محتاجة عنوان ثابت دايماً ومايتغيرش، زي السيرفرات الأساسية أو الطابعات المشتركة اللي أجهزة تانية بتعتمد على عنوانها الثابت."},
+    {q:"إيه اللي بيحصل لو جهاز مش لاقي DHCP Server خالص على شبكة Windows؟", a:"الجهاز بياخد عنوان مؤقت تلقائي من مدى APIPA (يبدأ بـ 169.254.x.x) لحد ما يلاقي DHCP Server حقيقي."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch11", num:"11", title:"HTTP/HTTPS وTLS: أساس تصفح الإنترنت", navTitle:"HTTP & TLS",
+  lede:"زكا: إيه الفرق بين الـ http والـ https اللي بشوفه في أول أي رابط؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> HTTP هو البروتوكول اللي بيسمح للمتصفح يطلب صفحات من سيرفر ويستقبلها. HTTPS هو نفس الحاجة بالظبط، بس <b>مشفرة</b> عن طريق طبقة إضافية اسمها TLS.</p>
+  </div>
+
+  <h3>HTTP — إزاي بيشتغل</h3>
+  <p>بروتوكول بنمط Request/Response بسيط:</p>
+  <div class="diagram">
+Client                          Server
+   │──── GET /index.html ──────────►│
+   │◄─── 200 OK + HTML content ─────│
+  </div>
+
+  <h3>أشهر HTTP Methods</h3>
+  <table>
+    <tr><th>Method</th><th>الاستخدام</th></tr>
+    <tr><td><b>GET</b></td><td>طلب بيانات (زي فتح صفحة)</td></tr>
+    <tr><td><b>POST</b></td><td>إرسال بيانات جديدة (زي إرسال فورم)</td></tr>
+    <tr><td><b>PUT</b></td><td>تحديث بيانات موجودة بالكامل</td></tr>
+    <tr><td><b>PATCH</b></td><td>تحديث جزء من البيانات فقط</td></tr>
+    <tr><td><b>DELETE</b></td><td>حذف بيانات</td></tr>
+  </table>
+
+  <h3>أشهر HTTP Status Codes</h3>
+  <table>
+    <tr><th>الكود</th><th>المعنى</th></tr>
+    <tr><td>200</td><td>OK — نجح الطلب</td></tr>
+    <tr><td>301 / 302</td><td>Redirect — تحويل لعنوان تاني</td></tr>
+    <tr><td>400</td><td>Bad Request — الطلب فيه خطأ</td></tr>
+    <tr><td>401</td><td>Unauthorized — محتاج تسجيل دخول</td></tr>
+    <tr><td>403</td><td>Forbidden — ممنوع الوصول</td></tr>
+    <tr><td>404</td><td>Not Found — الصفحة مش موجودة</td></tr>
+    <tr><td>500</td><td>Internal Server Error — مشكلة في السيرفر نفسه</td></tr>
+  </table>
+
+  <h3>TLS — طبقة الحماية</h3>
+  <p><b>TLS</b> (Transport Layer Security، الاسم القديم كان SSL) بيوفر 3 حاجات أساسية للاتصال:</p>
+  <ul>
+    <li><b>Encryption</b> — البيانات مشفرة، محدش يقدر يقرأها لو اعترضها في الطريق.</li>
+    <li><b>Authentication</b> — تأكيد إن السيرفر اللي بتتكلم معاه هو فعلاً اللي بيقول إنه هو (عن طريق Certificate).</li>
+    <li><b>Integrity</b> — تأكيد إن البيانات ماتغيرتش في الطريق.</li>
+  </ul>
+
+  <h3>الـ TLS Handshake المبسط</h3>
+  <div class="diagram">
+Client                          Server
+   │──── Client Hello ──────────────►│   "عايز أعمل اتصال آمن"
+   │◄─── Server Hello + Certificate ─│   "اتفضل الشهادة بتاعتي"
+   │──── تحقق من الشهادة، اتفاق على مفتاح مشفر ─►│
+   │◄══ باقي الاتصال بقى مشفر بالكامل ══►│
+  </div>
+
+  <div class="note"><b>ليه القفل الأخضر (🔒) مهم؟</b> لما تشوفه جنب عنوان الموقع، معناه إن الاتصال بينك وبين السيرفر مشفر بـ TLS. ده بيحميك من هجمات زي Man-in-the-Middle، لكنه <b>مايضمنش</b> إن الموقع نفسه شرعي أو آمن المحتوى — بس بيضمن إن حد تالت مايقدرش يتنصت على البيانات في الطريق.</div>
+
+  <div class="extra"><b>معلومة إضافية:</b> الشهادات (Certificates) بتتصدر من جهات موثوقة اسمها Certificate Authorities (CA)، زي Let's Encrypt أو DigiCert، وبتأكد إن الـ Public Key اللي السيرفر بيقدمه فعلاً بتاع الـ Domain ده.</div>
+  `,
+  qa:[
+    {q:"إيه الفرق بين HTTP وHTTPS؟", a:"نفس البروتوكول بالظبط، لكن HTTPS بيضيف طبقة تشفير (TLS) فوق الاتصال، بينما HTTP بيبعت البيانات من غير أي تشفير."},
+    {q:"إيه استخدام HTTP Method من نوع POST؟", a:"إرسال بيانات جديدة للسيرفر، زي إرسال بيانات فورم."},
+    {q:"إيه معنى Status Code 404؟", a:"Not Found — الصفحة أو المورد المطلوب مش موجود على السيرفر."},
+    {q:"اذكر الحاجات الثلاثة اللي TLS بيوفرها", a:"Encryption (تشفير البيانات)، Authentication (تأكيد هوية السيرفر عبر شهادة)، وIntegrity (تأكيد إن البيانات ماتغيرتش في الطريق)."},
+    {q:"إيه دور الـ Certificate Authority (CA)؟", a:"جهة موثوقة بتصدر شهادات TLS، وبتأكد إن الـ Public Key اللي السيرفر بيقدمه فعلاً بتاع الـ Domain الحقيقي ده."},
+    {q:"هل القفل الأخضر في المتصفح معناه إن الموقع آمن المحتوى؟", a:"لأ، معناه بس إن الاتصال مشفر بـ TLS ومحدش يقدر يتنصت عليه في الطريق. مايضمنش إن محتوى الموقع نفسه شرعي أو غير ضار."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch12", num:"12", title:"Firewalls وNAT: خط الدفاع الأول", navTitle:"Firewalls & NAT",
+  lede:"زكا: إزاي أحمي شبكتي من أي حد يحاول يدخل من غير إذن؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> أول خط دفاع اسمه <b>Firewall</b> — نظام بيراقب ويتحكم في أي بيانات داخلة أو خارجة من الشبكة، بناءً على قواعد إنت بتحددها.</p>
+  </div>
+
+  <h3>Firewall بيشتغل إزاي؟</h3>
+  <p>بيفحص كل Packet جاي أو رايح، ويقارنه بقواعد محددة (زي: "امنع أي اتصال جاي على Port 23"، أو "اسمح بس بالاتصالات الجاية من IP معين"). لو الـ Packet ماطابقش القواعد المسموحة، بيتم رفضه (Drop) أو رفضه مع تنبيه (Reject).</p>
+
+  <h3>أنواع الـ Firewalls</h3>
+  <table>
+    <tr><th>النوع</th><th>الوصف</th></tr>
+    <tr><td><b>Packet-Filtering</b></td><td>يفحص كل packet لوحده حسب IP/Port بس، بدون فهم للسياق</td></tr>
+    <tr><td><b>Stateful Inspection</b></td><td>بيتتبع حالة الاتصال بالكامل (مش كل packet لوحده)، أدق وأأمن</td></tr>
+    <tr><td><b>Application-Layer (Next-Gen)</b></td><td>بيفهم محتوى البروتوكول نفسه (زي HTTP)، يقدر يمنع هجمات أكتر تعقيداً</td></tr>
+  </table>
+
+  <h3>مثال قاعدة Firewall بسيطة</h3>
+  <pre><code>ALLOW  tcp  from any        to any  port 443   <span class="cmt"># اسمح بأي HTTPS</span>
+ALLOW  tcp  from any        to any  port 22    <span class="cmt"># اسمح بـ SSH</span>
+DENY   tcp  from any        to any  port 23    <span class="cmt"># امنع Telnet (غير آمن)</span>
+DENY   all  from any        to any             <span class="cmt"># امنع أي حاجة تانية (default deny)</span></code></pre>
+
+  <div class="note"><b>مبدأ الأمان الأساسي: Default Deny</b> — أفضل ممارسة في تصميم أي Firewall إنك تمنع كل حاجة بشكل افتراضي، وتسمح بس بالمحدد صراحة (Whitelist)، بدل العكس (تسمح بكل حاجة وتمنع المعروف بس).</div>
+
+  <h3>NAT — العنوان المشترك</h3>
+  <p>فاكر لما اتكلمنا عن Private IP في فصل الـ IP Addressing؟ <b>NAT</b> (Network Address Translation) هو اللي بيخلي كل الأجهزة اللي عندها Private IPs جوه بيتك تقدر توصل للإنترنت وهي مشاركة IP عام واحد بس (بتاع الراوتر).</p>
+
+  <div class="diagram">
+جوه البيت (Private IPs):
+[Laptop: 192.168.1.5]  ──┐
+[Phone: 192.168.1.8]   ──┼── Router (NAT) ── Public IP: 41.32.x.x ── Internet
+[TV: 192.168.1.12]     ──┘
+
+كل الأجهزة دي بتظهر للإنترنت بنفس الـ Public IP الواحد
+  </div>
+
+  <p>الراوتر بيحتفظ بجدول داخلي (NAT Table) بيربط كل طلب داخلي بالـ Port اللي استخدمه، عشان يعرف يرجّع الرد للجهاز الصح بالظبط لما الرد يوصل.</p>
+
+  <div class="extra"><b>معلومة إضافية:</b> NAT مش بديل حقيقي عن Firewall، لكن بشكل جانبي بيوفر حماية إضافية — لإن الأجهزة الداخلية مش عندها IP عام مباشر، صعب على حد من برا يبدأ اتصال معاها مباشرة من غير إذن.</div>
+  `,
+  qa:[
+    {q:"إيه وظيفة الـ Firewall الأساسية؟", a:"يراقب ويتحكم في أي بيانات داخلة أو خارجة من الشبكة، بناءً على قواعد محددة مسبقاً، ويرفض أي شيء ما يطابقش القواعد المسموحة."},
+    {q:"إيه الفرق بين Packet-Filtering Firewall وStateful Firewall؟", a:"Packet-Filtering بيفحص كل packet لوحده بدون سياق. Stateful Inspection بيتتبع حالة الاتصال بالكامل، فبيكون أدق وأأمن."},
+    {q:"إيه معنى مبدأ Default Deny في تصميم الـ Firewall؟", a:"إنك تمنع كل حاجة بشكل افتراضي وتسمح بس بالمحدد صراحة (Whitelist)، بدل ما تسمح بكل حاجة وتمنع المعروف كخطر بس."},
+    {q:"إيه هو NAT وليه محتاجينه؟", a:"Network Address Translation — يسمح لأجهزة متعددة عندها Private IPs إنها تشارك Public IP واحد بس للوصول للإنترنت، بدل ما كل جهاز يحتاج IP عام منفصل."},
+    {q:"إزاي NAT بيوفر حماية جانبية للشبكة الداخلية؟", a:"لإن الأجهزة الداخلية مالهاش IP عام مباشر ظاهر للإنترنت، فبيبقى صعب على أي حد من برا يبدأ اتصال معاها مباشرة من غير إذن مسبق من جوه الشبكة."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch13", num:"13", title:"VPN وأدوات التشخيص العملية", navTitle:"VPN & Troubleshooting",
+  lede:"زكا: وأنا شغال من بره، إزاي أوصل لشبكة الشركة بأمان زي إني قاعد جواها؟",
+  body:`
+  <div class="dialogue">
+    <p><b class="who k">كريم:</b> عن طريق <b>VPN</b> (Virtual Private Network) — بيعمل "نفق" مشفر بين جهازك وشبكة الشركة، وكأن جهازك بقى فعلياً جزء من الشبكة دي، حتى لو إنت جغرافياً في مكان تاني تماماً.</p>
+  </div>
+
+  <h3>VPN بيشتغل إزاي؟</h3>
+  <div class="diagram">
+جهازك (في البيت)  ══[نفق مشفر (Tunnel)]══►  VPN Server (الشركة)  ──►  شبكة الشركة الداخلية
+
+كل البيانات اللي بتعدي في النفق ده مشفرة بالكامل، حتى لو عدت على إنترنت عام (Wi-Fi كافيه مثلاً)
+  </div>
+
+  <h3>ليه VPN مهم؟</h3>
+  <ul>
+    <li><b>الأمان</b> — بيحميك خصوصاً على شبكات Wi-Fi العامة غير الموثوقة.</li>
+    <li><b>الوصول لموارد داخلية</b> — تقدر توصل لسيرفرات أو أنظمة الشركة اللي مش متاحة على الإنترنت العام أصلاً.</li>
+    <li><b>إخفاء الموقع الجغرافي الفعلي</b> — الموقع اللي بيظهر لأي موقع بتزوره هو موقع الـ VPN Server، مش موقعك الحقيقي.</li>
+  </ul>
+
+  <div class="note"><b>ملاحظة مهمة:</b> استخدام VPN شخصي (زي خدمات مدفوعة عامة) بيحميك من مزود الإنترنت (ISP) بتاعك أو شبكة الـ Wi-Fi اللي إنت عليها، لكن VPN provider نفسه بيقدر (نظرياً) يشوف بياناتك — فالثقة بتتحول للجهة اللي بتشغّل الـ VPN.</div>
+
+  <h3>أدوات التشخيص الأساسية (لازم تحفظهم)</h3>
+  <table>
+    <tr><th>الأمر</th><th>الاستخدام</th></tr>
+    <tr><td><code class="inline">ping</code></td><td>يتأكد إن جهاز/سيرفر معين "حي" وبيرد</td></tr>
+    <tr><td><code class="inline">traceroute</code> / <code class="inline">tracert</code></td><td>يوريك كل الـ hops في الطريق للوجهة</td></tr>
+    <tr><td><code class="inline">nslookup</code> / <code class="inline">dig</code></td><td>يحل اسم Domain لـ IP</td></tr>
+    <tr><td><code class="inline">ipconfig</code> (Windows) / <code class="inline">ifconfig</code>-<code class="inline">ip addr</code> (Linux)</td><td>يوريك إعدادات الشبكة بتاعة جهازك</td></tr>
+    <tr><td><code class="inline">netstat</code></td><td>يوريك كل الاتصالات الشغالة حالياً على جهازك</td></tr>
+    <tr><td><code class="inline">curl</code></td><td>يبعت طلب HTTP مباشرة من الـ terminal</td></tr>
+    <tr><td><code class="inline">telnet</code> / <code class="inline">nc</code> (netcat)</td><td>يتأكد إن port معين على جهاز معين مفتوح وبيستقبل اتصالات</td></tr>
+  </table>
+
+  <h3>مثال عملي: تشخيص مشكلة اتصال خطوة بخطوة</h3>
+  <div class="assign-block">
+    <span class="tag">سيناريو</span>
+    <p>موقع معين مش بيفتح عندك. إزاي تشخص المشكلة بالترتيب المنطقي؟</p>
+    <pre><code><span class="cmt"># 1. تأكد إن جهازك متصل بالشبكة أصلاً</span>
+ping 8.8.8.8            <span class="cmt"># اتصال بالإنترنت بشكل عام (IP جوجل)</span>
+
+<span class="cmt"># 2. تأكد إن DNS شغال</span>
+nslookup example.com     <span class="cmt"># لو فشل، المشكلة في DNS مش في الموقع نفسه</span>
+
+<span class="cmt"># 3. تأكد إن السيرفر نفسه بيرد</span>
+ping example.com
+
+<span class="cmt"># 4. تأكد إن الـ port الصح مفتوح (443 لـ HTTPS مثلاً)</span>
+curl -I https://example.com
+
+<span class="cmt"># 5. شوف مسار الاتصال بالكامل لو المشكلة لسه مش واضحة</span>
+traceroute example.com</code></pre>
+  </div>
+
+  <div class="extra"><b>معلومة إضافية:</b> ترتيب التشخيص ده بيتبع نفس فكرة طبقات OSI اللي اتعلمناها — بتبدأ بالطبقات الأساسية (الاتصال بالشبكة) وتصعد لفوق (DNS، بعدين التطبيق نفسه)، عشان تعزل المشكلة في أضيق نطاق ممكن.</div>
+  `,
+  qa:[
+    {q:"إيه اللي VPN بيوفره أساساً؟", a:"نفق مشفر (Tunnel) بين جهازك وشبكة معينة، بيخليك تتصل بأمان وكأنك جزء فعلي من الشبكة دي حتى لو إنت جغرافياً بعيد."},
+    {q:"إيه الفايدة الأمنية الأساسية من VPN على شبكة Wi-Fi عامة؟", a:"بيشفر بياناتك بالكامل، فحتى لو حد بيتنصت على الشبكة العامة نفسها، مش هيقدر يقرأ أي حاجة بتبعتها أو تستقبلها."},
+    {q:"إيه الفرق بين ping وtraceroute؟", a:"ping بيتأكد بس إن جهاز معين حي وبيرد. traceroute بيوريك كل الـ hops (المحطات) اللي البيانات بتعدي عليها في طريقها للوجهة."},
+    {q:"إيه أول خطوة منطقية في تشخيص مشكلة موقع مش بيفتح؟", a:"تتأكد إن جهازك متصل بالإنترنت بشكل عام الأول (زي ping على 8.8.8.8)، قبل ما تفحص DNS أو السيرفر نفسه — بتبدأ بالطبقات الأساسية وتصعد لفوق."},
+    {q:"إيه أداة تستخدمها للتأكد إن port معين على سيرفر معين مفتوح؟", a:"telnet أو netcat (nc)."}
+  ]
+});
+CHAPTERS.push({
+  id:"ch14", num:"14", title:"الخلاصة الشاملة وتمرين نهائي", navTitle:"الخلاصة والتمرين",
+  lede:"كريم: خلاص يا زكا، دلوقتي جه وقت نجمع كل حاجة اتعلمناها في صورة واحدة متكاملة.",
+  body:`
+  <h3>الرحلة الكاملة لباكيت بيانات (من الألف للياء)</h3>
+  <p>تخيل معايا رحلة طلب <code class="inline">https://example.com</code> كاملة، مستخدمين كل حاجة اتعلمناها:</p>
+  <div class="diagram">
+1. تكتب example.com في المتصفح
+2. DNS Lookup: الاسم بيتحول لـ IP (فصل DNS)
+3. TLS Handshake: اتصال آمن مشفر بيتعمل (فصل HTTPS/TLS)
+4. TCP 3-Way Handshake: اتصال موثوق بيتفتح (فصل TCP/UDP)
+5. HTTP Request: GET / بيتبعت فعلياً (فصل HTTP)
+6. البيانات بتتقسم وتتغلف طبقة طبقة (Encapsulation - فصل OSI)
+7. Routing: كل Router في الطريق بياخد قرار المسار (فصل Routing)
+8. Switching: جوه كل شبكة محلية، البيانات بتتوجه بالـ MAC (فصل Switching)
+9. Firewall: كل Packet بيتفحص حسب القواعد المسموحة (فصل Firewalls)
+10. NAT: لو خارج من شبكة منزلية، الـ IP الداخلي بيتحول لـ IP عام (فصل NAT)
+11. الرد بيرجع بنفس الرحلة بالعكس، والمتصفح يعرض الصفحة
+  </div>
+
+  <h3>ملخص المفاهيم الأساسية</h3>
+  <table>
+    <tr><th>المفهوم</th><th>الفكرة في جملة واحدة</th></tr>
+    <tr><td>OSI Model</td><td>7 طبقات نظرية توضح كل مسؤولية في التواصل</td></tr>
+    <tr><td>TCP/IP Model</td><td>4 طبقات عملية، ده اللي فعلياً شغال على الإنترنت</td></tr>
+    <tr><td>IP Address</td><td>عنوان كل جهاز، Public للعالم، Private جوه الشبكة المحلية</td></tr>
+    <tr><td>Subnetting</td><td>تقسيم الشبكة لأجزاء أصغر باستخدام Subnet Mask/CIDR</td></tr>
+    <tr><td>Routing</td><td>اختيار أفضل مسار بين شبكات مختلفة</td></tr>
+    <tr><td>Switching</td><td>التوجيه جوه نفس الشبكة المحلية باستخدام MAC</td></tr>
+    <tr><td>TCP vs UDP</td><td>موثوق وبطيء مقابل سريع وبدون ضمانات</td></tr>
+    <tr><td>DNS</td><td>تحويل الأسماء لعناوين IP</td></tr>
+    <tr><td>DHCP</td><td>توزيع عناوين IP تلقائياً</td></tr>
+    <tr><td>HTTP/TLS</td><td>بروتوكول الويب + طبقة التشفير فوقه</td></tr>
+    <tr><td>Firewall/NAT</td><td>الحماية وتقسيم العناوين العامة والخاصة</td></tr>
+    <tr><td>VPN</td><td>نفق مشفر للوصول الآمن عن بعد</td></tr>
+  </table>
+
+  <h3>🎯 تمرين شامل نهائي</h3>
+  <div class="assign-block">
+    <span class="tag">التمرين النهائي</span>
+    <ol>
+      <li>احسب: عندك شبكة <code class="inline">172.16.0.0/22</code>. كام جهاز فعلي يقدر يتصل؟ وإيه الـ Broadcast Address؟</li>
+      <li>اشرح بالتفصيل الفرق بين استخدام TCP وUDP في حالة: (أ) تحميل ملف من الإنترنت، (ب) بث مباشر (Live Stream) لمباراة.</li>
+      <li>ارسم (على ورقة) رحلة باكيت DNS كاملة من جهازك لحد ما يوصل لـ IP الموقع، مستخدم كل المصطلحات (Resolver, Root, TLD, Authoritative).</li>
+      <li>لو عندك شبكة شركة فيها قسمين (IT وHR) على نفس الـ Switch الفيزيائي، اشرح إزاي VLAN هيفصلهم منطقياً، وإيه اللي محتاجينه عشان الاتنين يقدروا يتواصلوا مع بعض لو احتاج الأمر.</li>
+      <li>صمم قواعد Firewall بسيطة (3-4 قواعد) لسيرفر ويب لازم يستقبل HTTP/HTTPS بس، ويسمح بـ SSH من IP إداري واحد محدد بس، ويمنع أي حاجة تانية.</li>
+    </ol>
+  </div>
+
+  <h3>إيه اللي فاتنا (للاستكشاف لاحقاً)</h3>
+  <ul>
+    <li><b>Wireless Networking بالتفصيل</b> — معايير Wi-Fi المختلفة (802.11ac/ax)، وطرق التشفير (WPA2/WPA3).</li>
+    <li><b>IPv6 بالتفصيل الكامل</b> — Subnetting وSLAAC وباقي المفاهيم الخاصة بيه.</li>
+    <li><b>Network Security متقدم</b> — IDS/IPS، DDoS mitigation، Penetration Testing.</li>
+    <li><b>Software-Defined Networking (SDN)</b> — الشبكات الحديثة المُدارة برمجياً.</li>
+    <li><b>Load Balancing خارج Kubernetes</b> — HAProxy, F5, وطرق التوزيع المختلفة.</li>
+  </ul>
+
+  <div class="extra"><b>كلمة كريم الأخيرة:</b> Networking زي أي مهارة تقنية تانية — الفهم النظري مهم، لكن الممارسة العملية (حساب Subnets بنفسك، تشغيل traceroute فعلياً، قراءة Firewall logs) هي اللي هتثبت المعلومة وتخليك واثق فعلاً. جرب كل حاجة اتعلمتها على جهازك بنفسك، حتى لو بأوامر بسيطة زي ping وnslookup.</div>
+  `,
+  qa:[
+    {q:"رتب الخطوات الأساسية اللي بتحصل لما تفتح موقع HTTPS في المتصفح (من غير الرحلة الكاملة بالتفصيل)", a:"DNS Lookup أولاً (تحويل الاسم لـ IP)، بعدها TLS Handshake (اتصال آمن)، بعدها TCP 3-Way Handshake، بعدها HTTP Request فعلي، وأخيراً الرد بيرجع بنفس الترتيب بالعكس."},
+    {q:"إيه العلاقة بين OSI Model وTCP/IP Model؟", a:"OSI هو النموذج النظري بـ7 طبقات يشرح كل مسؤولية بالتفصيل، وTCP/IP هو النموذج العملي المستخدم فعلياً على الإنترنت بـ4 طبقات، بيدمج بعض طبقات OSI مع بعض."},
+    {q:"إيه العلاقة بين DNS وDHCP؟", a:"مختلفين تماماً في الوظيفة: DHCP بيدّي جهازك IP Address تلقائياً وقت الاتصال بالشبكة، وDNS بيحول أسماء المواقع لعناوين IP وقت ما تحاول توصل لموقع معين."},
+    {q:"إيه دور NAT بالتحديد في رحلة الباكيت من شبكة منزلية للإنترنت؟", a:"بيحول الـ Private IP بتاع جهازك (زي 192.168.1.5) لـ Public IP بتاع الراوتر قبل ما البيانات تخرج فعلياً للإنترنت، وبيحتفظ بجدول عشان يرجّع أي رد للجهاز الصح بالظبط."}
+  ]
+});
+
+/* ============ END DATA ============ */
+
+/* ---------- Rendering ---------- */
+const navContainer = document.getElementById('navContainer');
+const chaptersEl = document.getElementById('content').querySelector('#chapters');
+
+function escId(s){ return s.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g,'-'); }
+
+function renderNav(){
+  let html = '<div class="nav-group-label">المحتويات</div>';
+  html += `<a class="nav-link" data-target="intro" href="#intro"><span class="n">00</span><span>البداية</span></a>`;
+  CHAPTERS.forEach(ch=>{
+    html += `<a class="nav-link" data-target="${ch.id}" href="#${ch.id}"><span class="n">${ch.num}</span><span>${ch.navTitle||ch.title}</span></a>`;
+  });
+  navContainer.innerHTML = html;
+}
+
+function renderChapters(){
+  let html = '';
+  CHAPTERS.forEach(ch=>{
+    html += `<section class="chapter" id="${ch.id}">
+      <div class="chapter-head"><span class="chapter-num">${ch.num}</span><h2>${ch.title}</h2></div>
+      ${ch.lede ? `<div class="lede">${ch.lede}</div>` : ''}
+      <div class="chapter-body">${ch.body}</div>`;
+
+    if(ch.qa && ch.qa.length){
+      html += `<div class="qa-title"><h3>🧠 أسئلة وأجوبة</h3><span class="qa-badge">${ch.qa.length} سؤال</span></div>`;
+      ch.qa.forEach(item=>{
+        html += `<details class="qa"><summary>${item.q}</summary><div class="qa-body">${item.a}</div></details>`;
+      });
+    }
+    html += `</section>`;
+  });
+  chaptersEl.innerHTML = html;
+}
+
+renderNav();
+renderChapters();
+
+/* ---------- Copy buttons for code blocks ---------- */
+document.querySelectorAll('pre').forEach(pre=>{
+  const codeEl = pre.querySelector('code');
+  const btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'نسخ';
+  btn.onclick = ()=>{
+    const text = codeEl ? codeEl.innerText : pre.innerText;
+    navigator.clipboard.writeText(text.trim());
+    btn.textContent = 'اتنسخ ✓';
+    setTimeout(()=>btn.textContent='نسخ', 1400);
+  };
+  pre.appendChild(btn);
+});
+
+/* ---------- Scroll spy ---------- */
+const navLinks = [...document.querySelectorAll('.nav-link')];
+const sections = [document.getElementById('intro'), ...CHAPTERS.map(c=>document.getElementById(c.id))];
+const pathCurrent = document.getElementById('pathCurrent');
+const progressLabel = document.getElementById('progressLabel');
+
+function onScroll(){
+  let currentId = 'intro';
+  for(const sec of sections){
+    if(!sec) continue;
+    const rect = sec.getBoundingClientRect();
+    if(rect.top <= 140) currentId = sec.id;
+  }
+  navLinks.forEach(l=>l.classList.toggle('active', l.dataset.target===currentId));
+  pathCurrent.textContent = currentId;
+  const idx = sections.findIndex(s=>s && s.id===currentId);
+  progressLabel.textContent = `${idx+1} / ${sections.length}`;
+}
+document.addEventListener('scroll', onScroll, {passive:true});
+onScroll();
+
+/* ---------- Mobile menu ---------- */
+const sidebar = document.getElementById('sidebar');
+document.getElementById('menuBtn').onclick = ()=> sidebar.classList.toggle('open');
+navLinks.forEach(l=> l.addEventListener('click', ()=> sidebar.classList.remove('open')));
+
+/* ---------- Search ---------- */
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('input', ()=>{
+  const q = searchInput.value.trim();
+  if(!q){
+    navLinks.forEach(l=>l.classList.remove('hidden'));
+    return;
+  }
+  navLinks.forEach(l=>{
+    const target = l.dataset.target;
+    const sec = document.getElementById(target);
+    const text = (sec ? sec.innerText : l.innerText);
+    l.classList.toggle('hidden', !text.includes(q));
+  });
+});
+</script>
+</body>
+</html>
