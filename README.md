@@ -1,4 +1,4 @@
-# 🎓 Zeeka Academy
+# 🎓 NEW Academy
 
 A collection of complete, from-scratch-to-professional learning courses — written in Arabic, in a storytelling/dialogue style, and self-hosted using the exact same technologies they teach: **Docker** and **Kubernetes**.
 
